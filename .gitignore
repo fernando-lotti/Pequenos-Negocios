@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Relatórios do smoke test (Playwright) — gerados a cada execução, não faz
+# sentido versionar.
+playwright-report
+test-results
+blob-report
+
+# Variáveis de ambiente: nenhum arquivo com chave de verdade vai pro git.
+# A única exceção é o .env.example, que é o modelo e tem os valores vazios.
+.env
+.env.*
+!.env.example
+
+# Configuração local do Claude Code (específica de cada máquina, não compartilhar)
+.claude/settings.local.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
