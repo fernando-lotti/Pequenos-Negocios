@@ -33,9 +33,10 @@ refactor: reorganiza hooks de custos
 
 ## 3. Pull Requests
 
-- Todo PR precisa de **pelo menos 1 aprovação** de outra pessoa do time antes do merge (configurar isso em Settings → Branches → Branch protection rules).
-- Descreva o que mudou e por quê — o template do PR já vem com uma checklist.
+- **Não é obrigatório** que outra pessoa aprove antes do merge — quem abriu o PR pode revisar o próprio trabalho e mergear direto quando estiver satisfeito. (O GitHub, aliás, nem deixa clicar em "Approve" no próprio PR — isso é normal, é só mergear mesmo sem esse clique.)
+- Ainda assim, descreva o que mudou e por quê — o template do PR já vem com uma checklist. Isso é documentação pra depois, não só formalidade pra alguém aprovar.
 - PRs pequenos e frequentes > PRs gigantes que ninguém consegue revisar direito. Isso é especialmente importante pra aprendizado: dá pra discutir cada decisão.
+- Pra mudanças mais arriscadas (ex: mexe em RLS, autenticação, cálculo de dinheiro), vale a pena pedir uma segunda opinião de outra pessoa do time antes de mergear — mas fica a critério de quem está mergeando, não é uma trava do processo.
 
 ## 4. Issues
 
