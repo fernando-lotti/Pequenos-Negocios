@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
-import { MonthlyProfitCard } from '../features/reports/MonthlyProfitCard'
-import { calculateAccumulatedCash, calculateMonthlyProfit } from '../features/reports/profit'
+import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
+import { calculateAccumulatedCash, calculateProfitForPeriod } from '../features/reports/profit'
 import { DailyCashSummary } from '../features/revenue/DailyCashSummary'
 import { WithdrawalForm } from '../features/withdrawals/WithdrawalForm'
 import { WithdrawalList } from '../features/withdrawals/WithdrawalList'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
-import { getCurrentMonthKey } from '../lib/date'
+import { getFirstDayOfCurrentMonthIso, getLastDayOfCurrentMonthIso } from '../lib/date'
 import type { Business } from '../features/business/types'
 import type { CostKind } from '../features/costs/types'
 import type { Withdrawal } from '../features/withdrawals/types'
@@ -35,10 +35,11 @@ export function DashboardPage({ business }: DashboardPageProps) {
     [categories],
   )
 
-  const monthKey = getCurrentMonthKey()
+  const startDate = getFirstDayOfCurrentMonthIso()
+  const endDate = getLastDayOfCurrentMonthIso()
   const breakdown = useMemo(
-    () => calculateMonthlyProfit(monthKey, costEntries, revenueEntries, categoryKindById),
-    [monthKey, costEntries, revenueEntries, categoryKindById],
+    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
+    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
   )
   const cashCents = useMemo(
     () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals),
@@ -52,7 +53,7 @@ export function DashboardPage({ business }: DashboardPageProps) {
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <h1 className="text-lg font-bold text-slate-900">{business.name}</h1>
-      <MonthlyProfitCard breakdown={breakdown} />
+      <ProfitSummaryCard breakdown={breakdown} />
       <DailyCashSummary cashCents={cashCents} />
       <WithdrawalForm
         key={editingWithdrawal?.id ?? 'new'}
