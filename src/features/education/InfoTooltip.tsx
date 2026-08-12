@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CONCEPT_TIPS } from './tips'
 
 interface InfoTooltipProps {
@@ -8,15 +8,29 @@ interface InfoTooltipProps {
 // Ícone "i" clicável que mostra a dica de um conceito sob demanda — diferente
 // do ConceptTip.tsx, que aparece sozinho na primeira vez e some pra sempre
 // depois de fechado. Este aqui fica sempre disponível, pra quem quiser
-// reler a explicação (ex: legenda de "Custo fixo" / "Custo variável" no
-// gerenciador de categorias).
+// reler a explicação (ex: seletor de tipo de custo no gerenciador de
+// categorias).
 export function InfoTooltip({ conceptId }: InfoTooltipProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLSpanElement>(null)
   const tip = CONCEPT_TIPS[conceptId]
+
+  // Fecha ao clicar em qualquer lugar fora do balãozinho.
+  useEffect(() => {
+    if (!isOpen) return
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
   if (!tip) return null
 
   return (
-    <span className="relative inline-block">
+    <span ref={containerRef} className="relative inline-block">
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}

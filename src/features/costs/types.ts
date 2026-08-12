@@ -25,7 +25,9 @@ export interface CostCategory {
 export interface CostEntry {
   id: string
   businessId: string
-  costCategoryId: string
+  // null quando a categoria original foi excluída (ver CostCategoryManager.tsx)
+  // — o lançamento fica "sem categoria" até alguém reclassificá-lo.
+  costCategoryId: string | null
   costDate: string
   amountCents: number
   quantity: number | null

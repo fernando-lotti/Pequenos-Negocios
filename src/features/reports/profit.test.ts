@@ -64,6 +64,21 @@ describe('calculateMonthlyProfit', () => {
     expect(result.profitCents).toBe(0)
   })
 
+  it('conta lançamentos com categoria excluída como "sem categoria", sem sumir do total', () => {
+    const costEntries = [
+      makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 }),
+      makeCostEntry({ costCategoryId: null, amountCents: 300 }),
+    ]
+    const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
+
+    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+
+    expect(result.fixedCostCents).toBe(1000)
+    expect(result.uncategorizedCostCents).toBe(300)
+    expect(result.totalCostCents).toBe(1300)
+    expect(result.profitCents).toBe(3700)
+  })
+
   it('pode dar lucro negativo (prejuízo) quando os custos superam a receita', () => {
     const costEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 10000 })]
     const revenueEntries = [makeRevenueEntry({ amountCents: 2000 })]

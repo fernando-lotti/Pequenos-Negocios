@@ -101,11 +101,18 @@ using (business_id in (select id from businesses where owner_id = auth.uid()));
 -- tranca período (ver ADR "Nunca existe fechamento ou trava do passado" em
 -- docs/ARCHITECTURE.md), então editar/excluir um lançamento antigo é sempre
 -- permitido e recalcula o lucro do mês automaticamente.
+--
+-- cost_category_id é opcional (on delete set null): excluir uma categoria
+-- que já tem lançamento não é bloqueado — os lançamentos ficam "sem
+-- categoria" (ver CostEntryList.tsx) em vez de impedir a exclusão. O valor
+-- gasto continua contando no lucro do mês (ver reports/profit.ts,
+-- uncategorizedCostCents), só sem saber se era custo fixo ou variável até
+-- alguém reclassificar o lançamento numa categoria existente.
 -- ----------------------------------------------------------------------------
 create table if not exists cost_entries (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses (id) on delete cascade,
-  cost_category_id uuid not null references cost_categories (id) on delete restrict,
+  cost_category_id uuid references cost_categories (id) on delete set null,
   cost_date date not null,
   amount_cents bigint not null check (amount_cents > 0),
   quantity numeric,
@@ -193,3 +200,17 @@ update cost_categories set kind = 'variable' where kind = 'input';
 
 alter table cost_categories drop constraint if exists cost_categories_kind_check;
 alter table cost_categories add constraint cost_categories_kind_check check (kind in ('fixed', 'variable'));
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (agora dá pra excluir de verdade uma categoria de custo,
+-- mesmo que já tenha lançamento — o lançamento fica "sem categoria" em vez
+-- de bloquear a exclusão). Projeto novo pode ignorar este bloco.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+alter table cost_entries alter column cost_category_id drop not null;
+alter table cost_entries drop constraint if exists cost_entries_cost_category_id_fkey;
+alter table cost_entries
+  add constraint cost_entries_cost_category_id_fkey
+  foreign key (cost_category_id) references cost_categories (id) on delete set null;

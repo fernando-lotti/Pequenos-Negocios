@@ -7,6 +7,10 @@ export interface MonthlyProfitBreakdown {
   revenueCents: number
   fixedCostCents: number
   variableCostCents: number
+  // Lançamentos cuja categoria foi excluída (ver CostCategoryManager.tsx) —
+  // o valor gasto continua contando no lucro, só não sabemos se era custo
+  // fixo ou variável até alguém reclassificar o lançamento.
+  uncategorizedCostCents: number
   totalCostCents: number
   profitCents: number
 }
@@ -28,21 +32,24 @@ export function calculateMonthlyProfit(
 
   let fixedCostCents = 0
   let variableCostCents = 0
+  let uncategorizedCostCents = 0
 
   for (const entry of costEntries) {
     if (getMonthKeyFromIsoDate(entry.costDate) !== monthKey) continue
-    const kind = categoryKindById.get(entry.costCategoryId)
+    const kind = entry.costCategoryId ? categoryKindById.get(entry.costCategoryId) : undefined
     if (kind === 'fixed') fixedCostCents += entry.amountCents
     else if (kind === 'variable') variableCostCents += entry.amountCents
+    else uncategorizedCostCents += entry.amountCents
   }
 
-  const totalCostCents = fixedCostCents + variableCostCents
+  const totalCostCents = fixedCostCents + variableCostCents + uncategorizedCostCents
 
   return {
     monthKey,
     revenueCents,
     fixedCostCents,
     variableCostCents,
+    uncategorizedCostCents,
     totalCostCents,
     profitCents: revenueCents - totalCostCents,
   }

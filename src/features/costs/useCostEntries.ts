@@ -5,7 +5,7 @@ import type { CostEntry } from './types'
 interface CostEntryRow {
   id: string
   business_id: string
-  cost_category_id: string
+  cost_category_id: string | null
   cost_date: string
   amount_cents: number
   quantity: number | null

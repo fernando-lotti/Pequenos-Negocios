@@ -14,6 +14,7 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Custo fixo | Custo que não varia com o volume de vendas/atendimentos (ex: aluguel) | `kind = 'fixed'` |
 | Custo variável | Custo que varia com o volume de vendas/atendimentos (inclui insumo — material consumido por venda/atendimento, como milho e óleo de um pipoqueiro) | `kind = 'variable'` |
 | Lançamento de custo | Um registro de gasto numa categoria, numa data | `cost_entry` (tabela `cost_entries`) |
+| Lançamento sem categoria | Lançamento de custo cuja categoria foi excluída — continua contando no lucro do mês, mas fora do detalhamento fixo/variável, até ser reclassificado | `cost_category_id = null` |
 | Receita | Dinheiro recebido por uma venda/atendimento | `revenue` |
 | Registro diário de receita | Lançamento de receita do dia (valor, unidades opcional) | `revenue_entry` (tabela `revenue_entries`) |
 | Caixa | Saldo calculado (receitas menos custos), nunca armazenado numa tabela própria | (calculado, ver `reports/profit.ts`) |
