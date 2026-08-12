@@ -120,3 +120,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Modelar produtos/serviços com preço e custo variável próprios, permitindo margem exata por item — rejeitada por ora por ser complexidade grande demais pro estágio atual do produto (exigiria repensar os formulários de custo e receita); deixar margem de fora até ter esse modelo — rejeitada porque uma média já é útil pro objetivo educativo do produto, mesmo sendo uma aproximação.
 
 **Consequências:** A margem é uma aproximação (mistura todos os produtos/serviços do negócio numa média só) — aceitável para o público-alvo do MVP, mas deve ficar claro na UI que é uma média. Se o produto evoluir pra suportar catálogo de itens (backlog), a margem por item vira uma melhoria natural sobre esse cálculo.
+
+---
+
+## [2026-08-12] — Retirada de caixa: tabela própria, fora do lucro, lançada na aba Início
+
+**Contexto:** O modelo original só tinha custo e receita — não havia como registrar que o dono tirou dinheiro do caixa pra uso pessoal, o que fazia o "Caixa" do Dashboard mostrar um valor maior do que o realmente disponível assim que isso acontecesse (issue #8).
+
+**Decisão:** Nova tabela `withdrawals` (mesmo padrão de RLS de dono único das outras tabelas, ver `SECURITY.md`), com `business_id`, `withdrawal_date`, `amount_cents`, `notes`. Retirada **não** é um `cost_entry` e não entra em `calculateMonthlyProfit` — ela só desconta de `calculateAccumulatedCash` (ver `reports/profit.ts`), porque não é gasto do negócio, é dinheiro que já saiu do caixa pro bolso do dono. A tela de lançar/editar/excluir retirada fica na aba **Início** (Dashboard), logo abaixo do card de Caixa — não virou uma aba nova no menu inferior, pra não lotar a navegação com uma ação que costuma ser esporádica (diferente de custo/receita, lançados quase todo dia). Relatórios mostra o total retirado do mês num card separado do detalhamento de custos, reforçando que lucro ≠ quanto o dono já tirou pra si (dica educativa nova: `retirada_de_caixa`).
+
+**Alternativas consideradas:** Modelar retirada como um `cost_entry` de uma categoria especial "Retirada" — rejeitada porque distorceria o lucro do mês (reduziria artificialmente, contradizendo o objetivo #1 do produto de mostrar lucro real); aba própria "Retiradas" no menu inferior, paralela a Custos/Receitas — rejeitada por enquanto porque o menu já tem 5 abas e retirada é uma ação mais esporádica, não diária.
+
+**Consequências:** Se o uso mostrar que retirada é lançada com bastante frequência, vale revisitar e promover pra aba própria no menu inferior.

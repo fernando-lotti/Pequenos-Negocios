@@ -218,6 +218,43 @@ on revenue_entries for delete
 using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 -- ----------------------------------------------------------------------------
+-- Tabela: withdrawals ("Retirada de caixa", ver GLOSSARY.md)
+--
+-- Dinheiro que o dono tira do caixa do negócio pra uso pessoal. Não é um
+-- custo do negócio (não entra em cost_entries nem em calculateMonthlyProfit,
+-- ver reports/profit.ts) — só reduz o caixa disponível (calculateAccumulatedCash).
+-- Sem categoria, sem "kind": é sempre o mesmo tipo de lançamento, então não
+-- precisava de uma tabela de categorias própria como cost_categories/revenue_categories.
+-- ----------------------------------------------------------------------------
+create table if not exists withdrawals (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  withdrawal_date date not null,
+  amount_cents bigint not null check (amount_cents > 0),
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+alter table withdrawals enable row level security;
+
+create policy "Dono vê retiradas dos próprios negócios"
+on withdrawals for select
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono lança retiradas nos próprios negócios"
+on withdrawals for insert
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono atualiza retiradas dos próprios negócios"
+on withdrawals for update
+using (business_id in (select id from businesses where owner_id = auth.uid()))
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono exclui retiradas dos próprios negócios"
+on withdrawals for delete
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+-- ----------------------------------------------------------------------------
 -- Índices — todo acesso é sempre filtrado por business_id (via RLS ou não),
 -- então é a coluna que mais importa indexar nas tabelas filhas.
 -- ----------------------------------------------------------------------------
@@ -228,6 +265,8 @@ create index if not exists idx_cost_entries_cost_date on cost_entries (business_
 create index if not exists idx_revenue_categories_business_id on revenue_categories (business_id);
 create index if not exists idx_revenue_entries_business_id on revenue_entries (business_id);
 create index if not exists idx_revenue_entries_revenue_date on revenue_entries (business_id, revenue_date);
+create index if not exists idx_withdrawals_business_id on withdrawals (business_id);
+create index if not exists idx_withdrawals_withdrawal_date on withdrawals (business_id, withdrawal_date);
 
 -- ============================================================================
 -- Migração — só precisa rodar isso se este projeto Supabase já existia
@@ -300,3 +339,47 @@ using (business_id in (select id from businesses where owner_id = auth.uid()));
 create index if not exists idx_revenue_categories_business_id on revenue_categories (business_id);
 
 alter table revenue_entries add column if not exists revenue_category_id uuid references revenue_categories (id) on delete set null;
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (issue: registrar retirada de caixa, dinheiro que o dono tira
+-- do negócio pra uso pessoal). Cria a tabela withdrawals. Projeto novo,
+-- rodando o arquivo inteiro pela primeira vez, pode ignorar este bloco —
+-- já nasce assim.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+create table if not exists withdrawals (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  withdrawal_date date not null,
+  amount_cents bigint not null check (amount_cents > 0),
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+alter table withdrawals enable row level security;
+
+drop policy if exists "Dono vê retiradas dos próprios negócios" on withdrawals;
+create policy "Dono vê retiradas dos próprios negócios"
+on withdrawals for select
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono lança retiradas nos próprios negócios" on withdrawals;
+create policy "Dono lança retiradas nos próprios negócios"
+on withdrawals for insert
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono atualiza retiradas dos próprios negócios" on withdrawals;
+create policy "Dono atualiza retiradas dos próprios negócios"
+on withdrawals for update
+using (business_id in (select id from businesses where owner_id = auth.uid()))
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono exclui retiradas dos próprios negócios" on withdrawals;
+create policy "Dono exclui retiradas dos próprios negócios"
+on withdrawals for delete
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create index if not exists idx_withdrawals_business_id on withdrawals (business_id);
+create index if not exists idx_withdrawals_withdrawal_date on withdrawals (business_id, withdrawal_date);

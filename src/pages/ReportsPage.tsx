@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
+import { Card } from '../components/Card'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
 import { MonthlyProfitCard } from '../features/reports/MonthlyProfitCard'
-import { calculateMonthlyProfit } from '../features/reports/profit'
+import { calculateMonthlyProfit, calculateMonthlyWithdrawals } from '../features/reports/profit'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
+import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
+import { formatCurrencyBRL } from '../lib/currency'
 import { getCurrentMonthKey } from '../lib/date'
 import type { Business } from '../features/business/types'
 import type { CostKind } from '../features/costs/types'
@@ -17,6 +20,7 @@ export function ReportsPage({ business }: ReportsPageProps) {
   const { categories } = useCostCategories(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
+  const { withdrawals, isLoading: isLoadingWithdrawals } = useWithdrawals(business.id)
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey())
 
   const categoryKindById = useMemo(
@@ -29,7 +33,12 @@ export function ReportsPage({ business }: ReportsPageProps) {
     [monthKey, costEntries, revenueEntries, categoryKindById],
   )
 
-  if (isLoadingCosts || isLoadingRevenue) {
+  const monthlyWithdrawalsCents = useMemo(
+    () => calculateMonthlyWithdrawals(monthKey, withdrawals),
+    [monthKey, withdrawals],
+  )
+
+  if (isLoadingCosts || isLoadingRevenue || isLoadingWithdrawals) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
   }
 
@@ -49,6 +58,15 @@ export function ReportsPage({ business }: ReportsPageProps) {
       </label>
 
       <MonthlyProfitCard breakdown={breakdown} />
+
+      <Card>
+        <p className="text-sm text-slate-600">Retiradas do mês</p>
+        <p className="mt-1 text-xl font-semibold text-slate-900">{formatCurrencyBRL(monthlyWithdrawalsCents)}</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Dinheiro que você tirou do caixa pra uso pessoal — não é um custo do negócio, por isso não aparece
+          descontado do lucro acima.
+        </p>
+      </Card>
 
       <p className="text-xs text-slate-500">
         Estes números refletem os lançamentos atuais, incluindo edições recentes — este app nunca "tranca" um mês
