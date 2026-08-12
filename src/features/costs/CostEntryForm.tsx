@@ -21,16 +21,10 @@ interface CostEntryFormProps {
 }
 
 export function CostEntryForm({ categories, onSubmit, entryToEdit, onCancelEdit }: CostEntryFormProps) {
-  const activeCategories = categories.filter((category) => category.isActive)
-  // Se a categoria do lançamento sendo editado foi desativada depois, ela
-  // não apareceria na lista de ativas — incluímos ela mesmo assim pra não
-  // trocar a categoria do lançamento sem a pessoa perceber.
-  const categoryOptions =
-    entryToEdit && !activeCategories.some((category) => category.id === entryToEdit.costCategoryId)
-      ? [...categories.filter((category) => category.id === entryToEdit.costCategoryId), ...activeCategories]
-      : activeCategories
-
-  const [costCategoryId, setCostCategoryId] = useState(entryToEdit?.costCategoryId ?? activeCategories[0]?.id ?? '')
+  // Se o lançamento sendo editado ficou "sem categoria" (a categoria dele
+  // foi excluída — ver CostCategoryManager.tsx), esse "??" já cai pra
+  // primeira categoria disponível, pedindo pra pessoa escolher uma nova.
+  const [costCategoryId, setCostCategoryId] = useState(entryToEdit?.costCategoryId ?? categories[0]?.id ?? '')
   const [costDate, setCostDate] = useState(entryToEdit?.costDate ?? getTodayAsIsoDate())
   const [amountText, setAmountText] = useState(entryToEdit ? centsToAmountInputText(entryToEdit.amountCents) : '')
   const [notes, setNotes] = useState(entryToEdit?.notes ?? '')
@@ -95,10 +89,9 @@ export function CostEntryForm({ categories, onSubmit, entryToEdit, onCancelEdit 
             onChange={(event) => setCostCategoryId(event.target.value)}
             className={fieldClass}
           >
-            {categoryOptions.map((category) => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name} — {COST_KIND_LABELS[category.kind]}
-                {!category.isActive ? ' (desativada)' : ''}
               </option>
             ))}
           </select>

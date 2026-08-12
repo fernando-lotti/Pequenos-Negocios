@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CostCategoryManager } from '../features/costs/CostCategoryManager'
 import { CostEntryForm } from '../features/costs/CostEntryForm'
 import { CostEntryList } from '../features/costs/CostEntryList'
@@ -17,11 +17,16 @@ export function CostsPage({ business }: CostsPageProps) {
     categories,
     isLoading: isLoadingCategories,
     createCategory,
-    renameCategory,
-    setCategoryActive,
+    updateCategory,
+    deleteCategory,
   } = useCostCategories(business.id)
   const { entries, isLoading: isLoadingEntries, createEntry, updateEntry, deleteEntry } = useCostEntries(business.id)
   const [editingEntry, setEditingEntry] = useState<CostEntry | null>(null)
+
+  const usedCategoryIds = useMemo(
+    () => new Set(entries.map((entry) => entry.costCategoryId).filter((id): id is string => id !== null)),
+    [entries],
+  )
 
   if (isLoadingCategories || isLoadingEntries) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
@@ -40,9 +45,10 @@ export function CostsPage({ business }: CostsPageProps) {
       />
       <CostCategoryManager
         categories={categories}
+        usedCategoryIds={usedCategoryIds}
         onCreate={createCategory}
-        onRename={renameCategory}
-        onSetActive={setCategoryActive}
+        onUpdate={updateCategory}
+        onDelete={deleteCategory}
       />
       <CostEntryList entries={entries} categories={categories} onEdit={setEditingEntry} onDelete={deleteEntry} />
     </div>

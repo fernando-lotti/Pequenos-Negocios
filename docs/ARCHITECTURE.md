@@ -96,3 +96,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Fechamento mensal imutável (como no projeto irmão) — rejeitado deliberadamente, não só adiado: o objetivo aqui é sempre refletir a realidade mais precisa possível, mesmo que isso mude o resultado de um mês já "passado" quando o usuário corrige um erro de lançamento.
 
 **Consequências:** Relatórios de meses anteriores podem mudar depois de gerados, se o usuário editar um lançamento antigo. Isso é esperado e correto neste produto — vale deixar isso claro na UI (ex: "estes números refletem os lançamentos atuais, incluindo edições recentes").
+
+---
+
+## [2026-08-12] — Excluir categoria de custo nunca é bloqueado, mesmo já usada
+
+**Contexto:** Categorias de custo inicialmente só podiam ser desativadas (`is_active = false`), nunca excluídas de verdade, pra não perder o rótulo em lançamentos antigos. O time decidiu simplificar pra uma única ação ("Excluir"), em vez de manter dois conceitos (desativar/excluir) na UI.
+
+**Decisão:** `cost_entries.cost_category_id` é opcional, com `on delete set null` — excluir uma categoria nunca é bloqueado. Se ela já tem lançamento, a UI mostra um aviso explicando que esses lançamentos vão ficar "sem categoria" (exibidos como tal em `CostEntryList.tsx`, contados à parte em `MonthlyProfitBreakdown.uncategorizedCostCents` pra não sumir do lucro do mês) até serem editados e reclassificados numa categoria existente.
+
+**Alternativas consideradas:** Manter "Desativar" como única opção pra categoria já usada (rejeitada — o time preferiu uma única ação de exclusão, mais simples de entender); bloquear a exclusão com erro (`on delete restrict`, comportamento anterior) — rejeitada por ser mais frustrante pro usuário do que só avisar e seguir em frente; apagar os lançamentos junto com a categoria — rejeitada por apagar dado real de gasto do negócio.
+
+**Consequências:** Precisa de uma tela futura pra filtrar/reclassificar lançamentos "sem categoria" em lote (ainda não construída — por enquanto, reclassificar é lançamento por lançamento, editando cada um).

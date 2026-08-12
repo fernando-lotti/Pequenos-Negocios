@@ -1,9 +1,15 @@
-export type CostKind = 'fixed' | 'variable' | 'input'
+export type CostKind = 'fixed' | 'variable'
 
 export const COST_KIND_LABELS: Record<CostKind, string> = {
   fixed: 'Custo fixo',
   variable: 'Custo variável',
-  input: 'Insumo',
+}
+
+// Liga cada tipo de custo ao id da dica educativa correspondente (ver
+// education/tips.ts) — usado pelo ícone "i" no seletor de tipo.
+export const COST_KIND_CONCEPT_IDS: Record<CostKind, string> = {
+  fixed: 'custo_fixo',
+  variable: 'custo_variavel',
 }
 
 export interface CostCategory {
@@ -19,7 +25,9 @@ export interface CostCategory {
 export interface CostEntry {
   id: string
   businessId: string
-  costCategoryId: string
+  // null quando a categoria original foi excluída (ver CostCategoryManager.tsx)
+  // — o lançamento fica "sem categoria" até alguém reclassificá-lo.
+  costCategoryId: string | null
   costDate: string
   amountCents: number
   quantity: number | null

@@ -31,9 +31,22 @@ export function MonthlyProfitCard({ breakdown }: MonthlyProfitCardProps) {
         <dt className="text-slate-500">Custos variáveis</dt>
         <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.variableCostCents)}</dd>
 
-        <dt className="text-slate-500">Insumos</dt>
-        <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.inputCostCents)}</dd>
+        {breakdown.uncategorizedCostCents > 0 && (
+          <>
+            <dt className="text-slate-500">Sem categoria</dt>
+            <dd className="text-right font-medium text-slate-900">
+              {formatCurrencyBRL(breakdown.uncategorizedCostCents)}
+            </dd>
+          </>
+        )}
       </dl>
+
+      {breakdown.uncategorizedCostCents > 0 && (
+        <p className="mt-2 text-xs text-slate-500">
+          Alguns custos estão "sem categoria" porque a categoria deles foi excluída. Edite esses lançamentos na tela
+          de Custos pra colocar numa categoria existente.
+        </p>
+      )}
     </Card>
   )
 }

@@ -5,13 +5,13 @@ export function sumCostEntriesCents(entries: CostEntry[]): number {
 }
 
 export interface CategoryTotal {
-  costCategoryId: string
+  costCategoryId: string | null
   totalCents: number
 }
 
 /** Soma os lançamentos por categoria — usado pra mostrar "quanto já gastei em cada categoria". */
 export function totalsByCategory(entries: CostEntry[]): CategoryTotal[] {
-  const totals = new Map<string, number>()
+  const totals = new Map<string | null, number>()
   for (const entry of entries) {
     totals.set(entry.costCategoryId, (totals.get(entry.costCategoryId) ?? 0) + entry.amountCents)
   }

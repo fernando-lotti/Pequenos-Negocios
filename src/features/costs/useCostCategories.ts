@@ -63,20 +63,26 @@ export function useCostCategories(businessId: string) {
     return category
   }
 
-  async function renameCategory(id: string, name: string): Promise<void> {
-    const { error: updateError } = await supabase.from('cost_categories').update({ name }).eq('id', id)
+  async function updateCategory(id: string, input: { name: string; kind: CostKind }): Promise<void> {
+    const { error: updateError } = await supabase
+      .from('cost_categories')
+      .update({ name: input.name, kind: input.kind })
+      .eq('id', id)
     if (updateError) throw updateError
-    setCategories((current) => current.map((category) => (category.id === id ? { ...category, name } : category)))
+    setCategories((current) =>
+      current.map((category) => (category.id === id ? { ...category, name: input.name, kind: input.kind } : category)),
+    )
   }
 
-  // "Excluir" uma categoria só desativa (is_active = false) — nunca apagamos
-  // de verdade, porque lançamentos antigos continuam apontando pra ela e
-  // perderíamos o rótulo no histórico (ver docs/ai/GLOSSARY.md).
-  async function setCategoryActive(id: string, isActive: boolean): Promise<void> {
-    const { error: updateError } = await supabase.from('cost_categories').update({ is_active: isActive }).eq('id', id)
-    if (updateError) throw updateError
-    setCategories((current) => current.map((category) => (category.id === id ? { ...category, isActive } : category)))
+  // Exclusão de verdade — o banco está configurado com "on delete set null"
+  // em cost_entries.cost_category_id (ver schema.sql), então lançamentos que
+  // usavam essa categoria não são apagados: ficam "sem categoria" até
+  // alguém reclassificá-los (ver CostCategoryManager.tsx e reports/profit.ts).
+  async function deleteCategory(id: string): Promise<void> {
+    const { error: deleteError } = await supabase.from('cost_categories').delete().eq('id', id)
+    if (deleteError) throw deleteError
+    setCategories((current) => current.filter((category) => category.id !== id))
   }
 
-  return { categories, isLoading, error, createCategory, renameCategory, setCategoryActive, refresh }
+  return { categories, isLoading, error, createCategory, updateCategory, deleteCategory, refresh }
 }

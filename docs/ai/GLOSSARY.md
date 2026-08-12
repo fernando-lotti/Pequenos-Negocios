@@ -10,17 +10,17 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Prestador de serviços | Cobra por serviço/atendimento/hora (motorista, maquiadora, cabeleireiro...) | `service_provider` |
 | Comerciante de produto | Compra insumo/mercadoria e vende produto (pipoqueiro, ambulante...) | `product_seller` |
 | Ficha inicial | Cadastro guiado do negócio, feito uma vez, que sugere as categorias de custo iniciais | (fluxo de onboarding, sem tabela própria) |
-| Categoria de custo | Agrupamento de custos (ex: "Insumos", "Aluguel da cadeira") | `cost_category` (tabela `cost_categories`) |
+| Categoria de custo | Agrupamento de custos (ex: "Aluguel da cadeira", "Embalagens") | `cost_category` (tabela `cost_categories`) |
 | Custo fixo | Custo que não varia com o volume de vendas/atendimentos (ex: aluguel) | `kind = 'fixed'` |
-| Custo variável | Custo que varia com o volume de vendas/atendimentos | `kind = 'variable'` |
-| Insumo | Material consumido por venda/atendimento (ex: milho e óleo de um pipoqueiro) | `kind = 'input'` |
+| Custo variável | Custo que varia com o volume de vendas/atendimentos (inclui insumo — material consumido por venda/atendimento, como milho e óleo de um pipoqueiro) | `kind = 'variable'` |
 | Lançamento de custo | Um registro de gasto numa categoria, numa data | `cost_entry` (tabela `cost_entries`) |
+| Lançamento sem categoria | Lançamento de custo cuja categoria foi excluída — continua contando no lucro do mês, mas fora do detalhamento fixo/variável, até ser reclassificado | `cost_category_id = null` |
 | Receita | Dinheiro recebido por uma venda/atendimento | `revenue` |
 | Registro diário de receita | Lançamento de receita do dia (valor, unidades opcional) | `revenue_entry` (tabela `revenue_entries`) |
 | Caixa | Saldo calculado (receitas menos custos), nunca armazenado numa tabela própria | (calculado, ver `reports/profit.ts`) |
 | Capital de giro | Reserva de dinheiro pra cobrir custos até a próxima entrada de receita | `working_capital_goal_cents` (campo opcional em `businesses`) |
-| Margem | Diferença entre o preço de venda e o custo variável/insumo de uma unidade | (calculado, Fase 2) |
-| Lucro líquido | Receitas do mês menos todos os custos (fixos + variáveis + insumos) do mês | (calculado, ver `reports/profit.ts`) |
+| Margem | Diferença entre o preço de venda e o custo variável de uma unidade | (calculado, Fase 2) |
+| Lucro líquido | Receitas do mês menos todos os custos (fixos + variáveis) do mês | (calculado, ver `reports/profit.ts`) |
 | Dica educativa | Explicação curta de um conceito financeiro, mostrada na primeira vez que ele aparece | `concept_tip` (conteúdo estático, ver `education/tips.ts`) |
 | Conceito | Identificador de um termo financeiro que tem dica educativa associada | `concept_id` (ex: `capital_de_giro`, `custo_fixo`) |
 

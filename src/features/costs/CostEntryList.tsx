@@ -23,7 +23,7 @@ export function CostEntryList({ entries, categories, onEdit, onDelete }: CostEnt
       ) : (
         <ul className="mt-3 flex flex-col divide-y divide-slate-100">
           {entries.map((entry) => {
-            const category = categoryById.get(entry.costCategoryId)
+            const category = entry.costCategoryId ? categoryById.get(entry.costCategoryId) : undefined
             return (
               <li key={entry.id} className="flex items-start justify-between gap-2 py-2">
                 <div className="min-w-0">

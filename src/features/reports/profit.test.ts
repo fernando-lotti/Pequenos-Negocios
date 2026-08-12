@@ -34,15 +34,13 @@ function makeRevenueEntry(overrides: Partial<RevenueEntry>): RevenueEntry {
 const categoryKindById = new Map<string, CostKind>([
   ['category-fixed', 'fixed'],
   ['category-variable', 'variable'],
-  ['category-input', 'input'],
 ])
 
 describe('calculateMonthlyProfit', () => {
-  it('calcula lucro = receitas menos custos fixos, variáveis e insumos do mês', () => {
+  it('calcula lucro = receitas menos custos fixos e variáveis do mês', () => {
     const costEntries = [
       makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 }),
       makeCostEntry({ costCategoryId: 'category-variable', amountCents: 500 }),
-      makeCostEntry({ costCategoryId: 'category-input', amountCents: 300 }),
     ]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
@@ -51,9 +49,8 @@ describe('calculateMonthlyProfit', () => {
     expect(result.revenueCents).toBe(5000)
     expect(result.fixedCostCents).toBe(1000)
     expect(result.variableCostCents).toBe(500)
-    expect(result.inputCostCents).toBe(300)
-    expect(result.totalCostCents).toBe(1800)
-    expect(result.profitCents).toBe(3200)
+    expect(result.totalCostCents).toBe(1500)
+    expect(result.profitCents).toBe(3500)
   })
 
   it('ignora lançamentos de outros meses', () => {
@@ -65,6 +62,21 @@ describe('calculateMonthlyProfit', () => {
     expect(result.revenueCents).toBe(0)
     expect(result.totalCostCents).toBe(0)
     expect(result.profitCents).toBe(0)
+  })
+
+  it('conta lançamentos com categoria excluída como "sem categoria", sem sumir do total', () => {
+    const costEntries = [
+      makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 }),
+      makeCostEntry({ costCategoryId: null, amountCents: 300 }),
+    ]
+    const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
+
+    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+
+    expect(result.fixedCostCents).toBe(1000)
+    expect(result.uncategorizedCostCents).toBe(300)
+    expect(result.totalCostCents).toBe(1300)
+    expect(result.profitCents).toBe(3700)
   })
 
   it('pode dar lucro negativo (prejuízo) quando os custos superam a receita', () => {
