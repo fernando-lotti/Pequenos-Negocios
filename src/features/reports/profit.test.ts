@@ -21,6 +21,7 @@ function makeRevenueEntry(overrides: Partial<RevenueEntry>): RevenueEntry {
   return {
     id: 'revenue-1',
     businessId: 'business-1',
+    revenueCategoryId: null,
     revenueDate: '2026-08-05',
     amountCents: 5000,
     unitsSold: null,

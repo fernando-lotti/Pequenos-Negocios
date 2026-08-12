@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getCostCategoryPreset } from './businessTypePresets'
+import { getCostCategoryPreset, getRevenueCategoryPreset } from './businessTypePresets'
 
 describe('getCostCategoryPreset', () => {
   it('devolve categorias sugeridas pro subtipo escolhido', () => {
@@ -14,5 +14,19 @@ describe('getCostCategoryPreset', () => {
 
   it('devolve lista vazia pra um subtipo desconhecido, em vez de quebrar', () => {
     expect(getCostCategoryPreset('subtipo-que-nao-existe')).toEqual([])
+  })
+})
+
+describe('getRevenueCategoryPreset', () => {
+  it('devolve categorias de receita sugeridas pro subtipo escolhido', () => {
+    expect(getRevenueCategoryPreset('pipoqueiro')).toEqual(['Pipoca doce', 'Pipoca salgada', 'Praliné'])
+  })
+
+  it('devolve lista vazia quando não há subtipo escolhido', () => {
+    expect(getRevenueCategoryPreset(null)).toEqual([])
+  })
+
+  it('devolve lista vazia pra um subtipo sem sugestão de categoria de receita', () => {
+    expect(getRevenueCategoryPreset('motorista_app')).toEqual([])
   })
 })

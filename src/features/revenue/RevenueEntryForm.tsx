@@ -5,17 +5,34 @@ import { PrimaryButton } from '../../components/PrimaryButton'
 import { fieldClass, labelClass } from '../../components/Field'
 import { centsToAmountInputText, parseTypedAmountToCents } from '../../lib/currency'
 import { getTodayAsIsoDate } from '../../lib/date'
-import type { RevenueEntry } from './types'
+import type { RevenueCategory, RevenueEntry } from './types'
 import type { NewRevenueEntryInput } from './useRevenueEntries'
 
+// Ver comentário equivalente em CostEntryForm.tsx.
+const NEW_CATEGORY_OPTION_VALUE = '__new__'
+
 interface RevenueEntryFormProps {
+  categories: RevenueCategory[]
   onSubmit: (input: NewRevenueEntryInput) => Promise<unknown>
   // Ver comentário equivalente em CostEntryForm.tsx.
   entryToEdit?: RevenueEntry | null
   onCancelEdit?: () => void
+  // Leva pra aba Ajustes, onde agora fica o cadastro de categorias de
+  // receita (ver SettingsPage.tsx) — usado pela opção "+ Nova categoria".
+  onManageCategories: () => void
 }
 
-export function RevenueEntryForm({ onSubmit, entryToEdit, onCancelEdit }: RevenueEntryFormProps) {
+export function RevenueEntryForm({
+  categories,
+  onSubmit,
+  entryToEdit,
+  onCancelEdit,
+  onManageCategories,
+}: RevenueEntryFormProps) {
+  // Diferente de categoria de custo, categoria de receita é opcional — nem
+  // todo negócio precisa separar de onde vem a receita, então o padrão é
+  // "Sem categoria" (valor vazio) em vez de forçar a primeira da lista.
+  const [revenueCategoryId, setRevenueCategoryId] = useState(entryToEdit?.revenueCategoryId ?? '')
   const [revenueDate, setRevenueDate] = useState(entryToEdit?.revenueDate ?? getTodayAsIsoDate())
   const [amountText, setAmountText] = useState(entryToEdit ? centsToAmountInputText(entryToEdit.amountCents) : '')
   const [unitsSoldText, setUnitsSoldText] = useState(entryToEdit?.unitsSold != null ? String(entryToEdit.unitsSold) : '')
@@ -43,7 +60,13 @@ export function RevenueEntryForm({ onSubmit, entryToEdit, onCancelEdit }: Revenu
     setIsSubmitting(true)
     try {
       const unitsSold = unitsSoldText.trim() ? Number(unitsSoldText) : null
-      await onSubmit({ revenueDate, amountCents, unitsSold, notes: notes.trim() || null })
+      await onSubmit({
+        revenueCategoryId: revenueCategoryId || null,
+        revenueDate,
+        amountCents,
+        unitsSold,
+        notes: notes.trim() || null,
+      })
       if (entryToEdit) {
         onCancelEdit?.()
       } else {
@@ -64,6 +87,42 @@ export function RevenueEntryForm({ onSubmit, entryToEdit, onCancelEdit }: Revenu
       <p className="font-semibold text-slate-900">{entryToEdit ? 'Editar receita' : 'Lançar receita do dia'}</p>
 
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="revenue-category" className={labelClass}>
+            Categoria (opcional)
+          </label>
+          {categories.length > 0 ? (
+            <select
+              id="revenue-category"
+              value={revenueCategoryId}
+              onChange={(event) => {
+                if (event.target.value === NEW_CATEGORY_OPTION_VALUE) {
+                  onManageCategories()
+                  return
+                }
+                setRevenueCategoryId(event.target.value)
+              }}
+              className={fieldClass}
+            >
+              <option value="">Sem categoria</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+              <option value={NEW_CATEGORY_OPTION_VALUE}>+ Nova categoria</option>
+            </select>
+          ) : (
+            <button
+              type="button"
+              onClick={onManageCategories}
+              className="rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-emerald-700"
+            >
+              + Cadastrar categoria de receita
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
             <label htmlFor="revenue-date" className={labelClass}>
