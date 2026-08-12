@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
+import { MonthlyGoalCard } from '../features/reports/MonthlyGoalCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateAccumulatedCash, calculateProfitForPeriod } from '../features/reports/profit'
 import { DailyCashSummary } from '../features/revenue/DailyCashSummary'
@@ -15,9 +16,10 @@ import type { Withdrawal } from '../features/withdrawals/types'
 
 interface DashboardPageProps {
   business: Business
+  onManageGoal: () => void
 }
 
-export function DashboardPage({ business }: DashboardPageProps) {
+export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
   const { categories } = useCostCategories(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
@@ -54,6 +56,7 @@ export function DashboardPage({ business }: DashboardPageProps) {
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <h1 className="text-lg font-bold text-slate-900">{business.name}</h1>
       <ProfitSummaryCard breakdown={breakdown} />
+      <MonthlyGoalCard business={business} breakdown={breakdown} onManageGoal={onManageGoal} />
       <DailyCashSummary cashCents={cashCents} />
       <WithdrawalForm
         key={editingWithdrawal?.id ?? 'new'}
