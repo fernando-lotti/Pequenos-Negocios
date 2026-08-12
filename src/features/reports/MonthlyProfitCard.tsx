@@ -1,4 +1,5 @@
 import { Card } from '../../components/Card'
+import { ConceptTip } from '../education/ConceptTip'
 import { formatCurrencyBRL } from '../../lib/currency'
 import { formatMonthKeyLabel } from '../../lib/date'
 import type { MonthlyProfitBreakdown } from './profit'
@@ -47,6 +48,21 @@ export function MonthlyProfitCard({ breakdown }: MonthlyProfitCardProps) {
           de Custos pra colocar numa categoria existente.
         </p>
       )}
+
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        <p className="text-sm text-slate-500">Margem média por unidade vendida</p>
+        {breakdown.marginPerUnitCents !== null ? (
+          <p className="mt-1 text-xl font-semibold text-slate-900">{formatCurrencyBRL(breakdown.marginPerUnitCents)}</p>
+        ) : (
+          <p className="mt-1 text-sm text-slate-500">
+            Preencha "Quantidade" ao lançar suas receitas pra ver quanto sobra, em média, de cada venda ou
+            atendimento.
+          </p>
+        )}
+        <div className="mt-2">
+          <ConceptTip conceptId="margem" />
+        </div>
+      </div>
     </Card>
   )
 }

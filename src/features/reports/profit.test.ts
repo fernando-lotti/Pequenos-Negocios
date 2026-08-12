@@ -101,6 +101,44 @@ describe('calculateMonthlyProfit', () => {
     const after = calculateMonthlyProfit('2026-08', editedCostEntries, revenueEntries, categoryKindById)
     expect(after.profitCents).toBe(1000)
   })
+
+  it('calcula a margem média por unidade como (receita - custo variável) / unidades vendidas', () => {
+    const costEntries = [
+      makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 }),
+      makeCostEntry({ costCategoryId: 'category-variable', amountCents: 2000 }),
+    ]
+    const revenueEntries = [
+      makeRevenueEntry({ amountCents: 3000, unitsSold: 10 }),
+      makeRevenueEntry({ amountCents: 7000, unitsSold: 20 }),
+    ]
+
+    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+
+    expect(result.unitsSoldTotal).toBe(30)
+    // (10000 receita - 2000 custo variável) / 30 unidades = 266,67 -> arredonda pra 267
+    expect(result.marginPerUnitCents).toBe(267)
+  })
+
+  it('ignora receitas sem "unidades vendidas" preenchido ao somar as unidades', () => {
+    const revenueEntries = [
+      makeRevenueEntry({ amountCents: 3000, unitsSold: null }),
+      makeRevenueEntry({ amountCents: 7000, unitsSold: 20 }),
+    ]
+
+    const result = calculateMonthlyProfit('2026-08', [], revenueEntries, categoryKindById)
+
+    expect(result.unitsSoldTotal).toBe(20)
+    expect(result.marginPerUnitCents).toBe(500)
+  })
+
+  it('devolve margem null quando nenhuma receita do mês tem unidades vendidas', () => {
+    const revenueEntries = [makeRevenueEntry({ amountCents: 5000, unitsSold: null })]
+
+    const result = calculateMonthlyProfit('2026-08', [], revenueEntries, categoryKindById)
+
+    expect(result.unitsSoldTotal).toBe(0)
+    expect(result.marginPerUnitCents).toBeNull()
+  })
 })
 
 describe('calculateAccumulatedCash', () => {

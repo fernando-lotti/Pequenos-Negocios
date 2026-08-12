@@ -13,6 +13,16 @@ export interface MonthlyProfitBreakdown {
   uncategorizedCostCents: number
   totalCostCents: number
   profitCents: number
+  // Soma da "Quantidade" (opcional) informada nos lançamentos de receita do
+  // mês — só conta quem preencheu esse campo.
+  unitsSoldTotal: number
+  // Margem média por unidade vendida/atendimento: (receita − custo
+  // variável conhecido) dividido pelas unidades vendidas no mês. Não
+  // desconta custo fixo nem "sem categoria" (ver ADR em docs/ARCHITECTURE.md)
+  // porque margem, por definição, é só sobre o custo variável de uma
+  // unidade (ver GLOSSARY.md). É `null` quando ninguém preencheu
+  // "Quantidade" em nenhuma receita do mês — sem isso não dá pra calcular.
+  marginPerUnitCents: number | null
 }
 
 // Função pura, sem chamada ao Supabase — recebe os lançamentos já
@@ -26,9 +36,11 @@ export function calculateMonthlyProfit(
   revenueEntries: RevenueEntry[],
   categoryKindById: Map<string, CostKind>,
 ): MonthlyProfitBreakdown {
-  const revenueCents = revenueEntries
-    .filter((entry) => getMonthKeyFromIsoDate(entry.revenueDate) === monthKey)
-    .reduce((total, entry) => total + entry.amountCents, 0)
+  const monthRevenueEntries = revenueEntries.filter((entry) => getMonthKeyFromIsoDate(entry.revenueDate) === monthKey)
+
+  const revenueCents = monthRevenueEntries.reduce((total, entry) => total + entry.amountCents, 0)
+
+  const unitsSoldTotal = monthRevenueEntries.reduce((total, entry) => total + (entry.unitsSold ?? 0), 0)
 
   let fixedCostCents = 0
   let variableCostCents = 0
@@ -44,6 +56,9 @@ export function calculateMonthlyProfit(
 
   const totalCostCents = fixedCostCents + variableCostCents + uncategorizedCostCents
 
+  const marginPerUnitCents =
+    unitsSoldTotal > 0 ? Math.round((revenueCents - variableCostCents) / unitsSoldTotal) : null
+
   return {
     monthKey,
     revenueCents,
@@ -52,6 +67,8 @@ export function calculateMonthlyProfit(
     uncategorizedCostCents,
     totalCostCents,
     profitCents: revenueCents - totalCostCents,
+    unitsSoldTotal,
+    marginPerUnitCents,
   }
 }
 

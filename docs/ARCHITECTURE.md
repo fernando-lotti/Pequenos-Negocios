@@ -108,3 +108,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Manter "Desativar" como única opção pra categoria já usada (rejeitada — o time preferiu uma única ação de exclusão, mais simples de entender); bloquear a exclusão com erro (`on delete restrict`, comportamento anterior) — rejeitada por ser mais frustrante pro usuário do que só avisar e seguir em frente; apagar os lançamentos junto com a categoria — rejeitada por apagar dado real de gasto do negócio.
 
 **Consequências:** Precisa de uma tela futura pra filtrar/reclassificar lançamentos "sem categoria" em lote (ainda não construída — por enquanto, reclassificar é lançamento por lançamento, editando cada um).
+
+---
+
+## [2026-08-12] — Margem é uma média do mês, não por produto/serviço individual
+
+**Contexto:** O produto não modela "produtos" ou "serviços" como entidades separadas — receita é lançada como um valor total do dia, com uma quantidade opcional (`revenue_entries.units_sold`), e custo variável também não é rateado por unidade de produto. Calcular margem por item exigiria um modelo de dados bem mais complexo (catálogo de produtos, preço e custo variável por item).
+
+**Decisão:** A margem mostrada em `MonthlyProfitCard.tsx` é uma média do mês inteiro: `(receita do mês − custos variáveis conhecidos do mês) ÷ total de "Quantidade" preenchida nas receitas do mês` (ver `calculateMonthlyProfit` em `reports/profit.ts`, campo `marginPerUnitCents`). Custos "sem categoria" (categoria excluída, kind desconhecido) não entram nessa conta, porque não dá pra saber se eram variáveis. Quando ninguém preencheu "Quantidade" em nenhuma receita do mês, o campo fica `null` e a tela pede pra preencher esse campo.
+
+**Alternativas consideradas:** Modelar produtos/serviços com preço e custo variável próprios, permitindo margem exata por item — rejeitada por ora por ser complexidade grande demais pro estágio atual do produto (exigiria repensar os formulários de custo e receita); deixar margem de fora até ter esse modelo — rejeitada porque uma média já é útil pro objetivo educativo do produto, mesmo sendo uma aproximação.
+
+**Consequências:** A margem é uma aproximação (mistura todos os produtos/serviços do negócio numa média só) — aceitável para o público-alvo do MVP, mas deve ficar claro na UI que é uma média. Se o produto evoluir pra suportar catálogo de itens (backlog), a margem por item vira uma melhoria natural sobre esse cálculo.
