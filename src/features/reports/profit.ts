@@ -1,5 +1,6 @@
 import type { CostEntry, CostKind } from '../costs/types'
 import type { RevenueEntry } from '../revenue/types'
+import type { Withdrawal } from '../withdrawals/types'
 
 export interface ProfitBreakdown {
   startDate: string
@@ -87,9 +88,27 @@ export function getEarliestEntryDate(costEntries: CostEntry[], revenueEntries: R
   return allDates.reduce((earliest, date) => (date < earliest ? date : earliest))
 }
 
-/** Caixa acumulado (histórico completo, não só do mês) — ver DailyCashSummary.tsx. */
-export function calculateAccumulatedCash(costEntries: CostEntry[], revenueEntries: RevenueEntry[]): number {
+/**
+ * Caixa acumulado (histórico completo, não só do mês) — ver DailyCashSummary.tsx.
+ *
+ * Retirada de caixa (ver src/features/withdrawals) reduz o caixa disponível
+ * igual um custo, mas não é passada pra calculateProfitForPeriod — não é um
+ * gasto do negócio, é só dinheiro que já saiu do caixa pro bolso do dono.
+ */
+export function calculateAccumulatedCash(
+  costEntries: CostEntry[],
+  revenueEntries: RevenueEntry[],
+  withdrawals: Withdrawal[],
+): number {
   const totalRevenueCents = revenueEntries.reduce((total, entry) => total + entry.amountCents, 0)
   const totalCostCents = costEntries.reduce((total, entry) => total + entry.amountCents, 0)
-  return totalRevenueCents - totalCostCents
+  const totalWithdrawalCents = withdrawals.reduce((total, withdrawal) => total + withdrawal.amountCents, 0)
+  return totalRevenueCents - totalCostCents - totalWithdrawalCents
+}
+
+/** Soma das retiradas de um período (mesmo intervalo inclusivo usado em calculateProfitForPeriod) — usada nos relatórios, separado dos custos. */
+export function calculateWithdrawalsForPeriod(startDate: string, endDate: string, withdrawals: Withdrawal[]): number {
+  return withdrawals
+    .filter((withdrawal) => withdrawal.withdrawalDate >= startDate && withdrawal.withdrawalDate <= endDate)
+    .reduce((total, withdrawal) => total + withdrawal.amountCents, 0)
 }

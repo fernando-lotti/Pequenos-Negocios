@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { calculateAccumulatedCash, calculateProfitForPeriod, getEarliestEntryDate } from './profit'
+import { calculateAccumulatedCash, calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from './profit'
 import type { CostEntry, CostKind } from '../costs/types'
 import type { RevenueEntry } from '../revenue/types'
+import type { Withdrawal } from '../withdrawals/types'
 
 function makeCostEntry(overrides: Partial<CostEntry>): CostEntry {
   return {
@@ -26,6 +27,18 @@ function makeRevenueEntry(overrides: Partial<RevenueEntry>): RevenueEntry {
     amountCents: 5000,
     unitsSold: null,
     paymentMethod: null,
+    notes: null,
+    createdAt: '2026-08-05T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function makeWithdrawal(overrides: Partial<Withdrawal>): Withdrawal {
+  return {
+    id: 'withdrawal-1',
+    businessId: 'business-1',
+    withdrawalDate: '2026-08-05',
+    amountCents: 200,
     notes: null,
     createdAt: '2026-08-05T00:00:00.000Z',
     ...overrides,
@@ -194,6 +207,42 @@ describe('calculateAccumulatedCash', () => {
       makeRevenueEntry({ revenueDate: '2026-08-15', amountCents: 4000 }),
     ]
 
-    expect(calculateAccumulatedCash(costEntries, revenueEntries)).toBe(5500)
+    expect(calculateAccumulatedCash(costEntries, revenueEntries, [])).toBe(5500)
+  })
+
+  it('desconta também as retiradas de caixa, de qualquer mês', () => {
+    const costEntries = [makeCostEntry({ costDate: '2026-08-01', amountCents: 500 })]
+    const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-08-15', amountCents: 4000 })]
+    const withdrawals = [
+      makeWithdrawal({ withdrawalDate: '2026-06-01', amountCents: 300 }),
+      makeWithdrawal({ withdrawalDate: '2026-08-10', amountCents: 700 }),
+    ]
+
+    expect(calculateAccumulatedCash(costEntries, revenueEntries, withdrawals)).toBe(2500)
+  })
+})
+
+describe('calculateWithdrawalsForPeriod', () => {
+  it('soma só as retiradas dentro do período pedido, ignorando as de fora', () => {
+    const withdrawals = [
+      makeWithdrawal({ withdrawalDate: '2026-08-05', amountCents: 200 }),
+      makeWithdrawal({ withdrawalDate: '2026-08-20', amountCents: 300 }),
+      makeWithdrawal({ withdrawalDate: '2026-07-20', amountCents: 9999 }),
+    ]
+
+    expect(calculateWithdrawalsForPeriod('2026-08-01', '2026-08-31', withdrawals)).toBe(500)
+  })
+
+  it('inclui retiradas exatamente na data de início e na de fim do período', () => {
+    const withdrawals = [
+      makeWithdrawal({ withdrawalDate: '2026-08-01', amountCents: 100 }),
+      makeWithdrawal({ withdrawalDate: '2026-08-31', amountCents: 200 }),
+    ]
+
+    expect(calculateWithdrawalsForPeriod('2026-08-01', '2026-08-31', withdrawals)).toBe(300)
+  })
+
+  it('devolve 0 quando não há retiradas no período', () => {
+    expect(calculateWithdrawalsForPeriod('2026-08-01', '2026-08-31', [])).toBe(0)
   })
 })

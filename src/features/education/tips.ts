@@ -34,4 +34,9 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
     title: '💡 O que é margem?',
     body: 'É quanto sobra de cada venda ou atendimento depois de descontar só o custo variável dela (o insumo, por exemplo) — sem contar os custos fixos do mês, como aluguel. Aqui mostramos a margem média: pegamos a receita do mês menos os custos variáveis do mês, e dividimos pela quantidade vendida. Por isso ela só aparece se você preencher "Quantidade" ao lançar suas receitas.',
   },
+  retirada_de_caixa: {
+    id: 'retirada_de_caixa',
+    title: '💡 Retirada não é a mesma coisa que custo',
+    body: 'Quando você tira dinheiro do caixa do negócio pra uso pessoal, isso reduz o caixa (quanto dinheiro sobra), mas não é um gasto do negócio — por isso não é descontado do seu lucro. O lucro mostra quanto o negócio gerou; a retirada mostra quanto disso você já tirou pra você.',
+  },
 }
