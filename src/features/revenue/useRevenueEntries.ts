@@ -5,6 +5,7 @@ import type { RevenueEntry } from './types'
 interface RevenueEntryRow {
   id: string
   business_id: string
+  revenue_category_id: string | null
   revenue_date: string
   amount_cents: number
   units_sold: number | null
@@ -17,6 +18,7 @@ function mapRow(row: RevenueEntryRow): RevenueEntry {
   return {
     id: row.id,
     businessId: row.business_id,
+    revenueCategoryId: row.revenue_category_id,
     revenueDate: row.revenue_date,
     amountCents: row.amount_cents,
     unitsSold: row.units_sold,
@@ -27,6 +29,7 @@ function mapRow(row: RevenueEntryRow): RevenueEntry {
 }
 
 export interface NewRevenueEntryInput {
+  revenueCategoryId?: string | null
   revenueDate: string
   amountCents: number
   unitsSold?: number | null
@@ -65,6 +68,7 @@ export function useRevenueEntries(businessId: string) {
       .from('revenue_entries')
       .insert({
         business_id: businessId,
+        revenue_category_id: input.revenueCategoryId ?? null,
         revenue_date: input.revenueDate,
         amount_cents: input.amountCents,
         units_sold: input.unitsSold ?? null,
@@ -82,6 +86,7 @@ export function useRevenueEntries(businessId: string) {
     const { data, error: updateError } = await supabase
       .from('revenue_entries')
       .update({
+        revenue_category_id: input.revenueCategoryId ?? null,
         revenue_date: input.revenueDate,
         amount_cents: input.amountCents,
         units_sold: input.unitsSold ?? null,

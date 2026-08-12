@@ -99,3 +99,16 @@ export function getCostCategoryPreset(businessSubtype: string | null): CostCateg
   if (!businessSubtype) return []
   return COST_CATEGORY_PRESETS[businessSubtype] ?? []
 }
+
+// Preset de categorias de receita — diferente do de custo, a maioria dos
+// subtipos não tem sugestão pronta (nem todo negócio precisa separar de
+// onde vem a receita). Só faz sentido pra quem vende produtos variados sob
+// o mesmo negócio, como o pipoqueiro (pipoca doce, salgada, praliné).
+const REVENUE_CATEGORY_PRESETS: Record<string, string[]> = {
+  pipoqueiro: ['Pipoca doce', 'Pipoca salgada', 'Praliné'],
+}
+
+export function getRevenueCategoryPreset(businessSubtype: string | null): string[] {
+  if (!businessSubtype) return []
+  return REVENUE_CATEGORY_PRESETS[businessSubtype] ?? []
+}

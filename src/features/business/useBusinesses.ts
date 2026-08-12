@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { getCostCategoryPreset } from './businessTypePresets'
+import { getCostCategoryPreset, getRevenueCategoryPreset } from './businessTypePresets'
 import type { Business, NewBusinessInput } from './types'
 
 // Guardamos qual negócio está "ativo" no localStorage — é uma preferência
@@ -108,6 +108,21 @@ export function useBusinesses(userId: string | null): UseBusinessesResult {
         // Não interrompe o fluxo: o negócio já foi criado, e dá pra criar
         // categorias na mão se o seed falhar por algum motivo.
         console.error('Erro ao criar categorias de custo sugeridas:', seedError)
+      }
+    }
+
+    // Mesma lógica pro seed de categorias de receita (ver businessTypePresets.ts)
+    // — só existe sugestão pra alguns subtipos, como pipoqueiro.
+    const revenueCategoryNames = getRevenueCategoryPreset(input.businessSubtype)
+    if (revenueCategoryNames.length > 0) {
+      const { error: revenueSeedError } = await supabase.from('revenue_categories').insert(
+        revenueCategoryNames.map((name) => ({
+          business_id: business.id,
+          name,
+        })),
+      )
+      if (revenueSeedError) {
+        console.error('Erro ao criar categorias de receita sugeridas:', revenueSeedError)
       }
     }
 

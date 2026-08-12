@@ -140,15 +140,56 @@ on cost_entries for delete
 using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 -- ----------------------------------------------------------------------------
+-- Tabela: revenue_categories ("Categoria de receita", ver GLOSSARY.md)
+--
+-- Espelha cost_categories, mas sem "kind" — categoria de receita é só um
+-- rótulo livre pra separar de onde vem o dinheiro (ex: "Pipoca doce",
+-- "Pipoca salgada"), diferente de custo que também precisa saber se é
+-- fixo ou variável. Assim como em cost_categories, o preset inicial (ver
+-- businessTypePresets.ts) é só ponto de partida — totalmente editável.
+-- ----------------------------------------------------------------------------
+create table if not exists revenue_categories (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  name text not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+alter table revenue_categories enable row level security;
+
+create policy "Dono vê categorias de receita dos próprios negócios"
+on revenue_categories for select
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono cria categorias de receita nos próprios negócios"
+on revenue_categories for insert
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono atualiza categorias de receita dos próprios negócios"
+on revenue_categories for update
+using (business_id in (select id from businesses where owner_id = auth.uid()))
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono exclui categorias de receita dos próprios negócios"
+on revenue_categories for delete
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+-- ----------------------------------------------------------------------------
 -- Tabela: revenue_entries ("Lançamento de receita" / registro diário, ver GLOSSARY.md)
 --
 -- units_sold é opcional (ex: quantos atendimentos, quantos saquinhos de
 -- pipoca) — capturado desde já porque é barato, mas o cálculo de margem
 -- por unidade fica pra Fase 2 (ver docs/ROADMAP.md).
+--
+-- revenue_category_id é opcional (on delete set null) — mesmo padrão de
+-- cost_entries.cost_category_id: excluir uma categoria de receita não
+-- apaga os lançamentos que a usavam, eles só ficam "sem categoria".
 -- ----------------------------------------------------------------------------
 create table if not exists revenue_entries (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses (id) on delete cascade,
+  revenue_category_id uuid references revenue_categories (id) on delete set null,
   revenue_date date not null,
   amount_cents bigint not null check (amount_cents > 0),
   units_sold numeric,
@@ -184,6 +225,7 @@ create index if not exists idx_businesses_owner_id on businesses (owner_id);
 create index if not exists idx_cost_categories_business_id on cost_categories (business_id);
 create index if not exists idx_cost_entries_business_id on cost_entries (business_id);
 create index if not exists idx_cost_entries_cost_date on cost_entries (business_id, cost_date);
+create index if not exists idx_revenue_categories_business_id on revenue_categories (business_id);
 create index if not exists idx_revenue_entries_business_id on revenue_entries (business_id);
 create index if not exists idx_revenue_entries_revenue_date on revenue_entries (business_id, revenue_date);
 
@@ -214,3 +256,47 @@ alter table cost_entries drop constraint if exists cost_entries_cost_category_id
 alter table cost_entries
   add constraint cost_entries_cost_category_id_fkey
   foreign key (cost_category_id) references cost_categories (id) on delete set null;
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (issue: permitir categorizar lançamentos de receita, ex:
+-- pipoca doce/salgada). Cria a tabela revenue_categories e adiciona a coluna
+-- revenue_category_id em revenue_entries. Projeto novo, rodando o arquivo
+-- inteiro pela primeira vez, pode ignorar este bloco — já nasce assim.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+create table if not exists revenue_categories (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  name text not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+alter table revenue_categories enable row level security;
+
+drop policy if exists "Dono vê categorias de receita dos próprios negócios" on revenue_categories;
+create policy "Dono vê categorias de receita dos próprios negócios"
+on revenue_categories for select
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono cria categorias de receita nos próprios negócios" on revenue_categories;
+create policy "Dono cria categorias de receita nos próprios negócios"
+on revenue_categories for insert
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono atualiza categorias de receita dos próprios negócios" on revenue_categories;
+create policy "Dono atualiza categorias de receita dos próprios negócios"
+on revenue_categories for update
+using (business_id in (select id from businesses where owner_id = auth.uid()))
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono exclui categorias de receita dos próprios negócios" on revenue_categories;
+create policy "Dono exclui categorias de receita dos próprios negócios"
+on revenue_categories for delete
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create index if not exists idx_revenue_categories_business_id on revenue_categories (business_id);
+
+alter table revenue_entries add column if not exists revenue_category_id uuid references revenue_categories (id) on delete set null;
