@@ -132,3 +132,17 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Modelar retirada como um `cost_entry` de uma categoria especial "Retirada" — rejeitada porque distorceria o lucro do mês (reduziria artificialmente, contradizendo o objetivo #1 do produto de mostrar lucro real); aba própria "Retiradas" no menu inferior, paralela a Custos/Receitas — rejeitada por enquanto porque o menu já tem 5 abas e retirada é uma ação mais esporádica, não diária.
 
 **Consequências:** Se o uso mostrar que retirada é lançada com bastante frequência, vale revisitar e promover pra aba própria no menu inferior.
+
+---
+
+## [2026-08-12] — Parcelador automático gera cost_entries de verdade, sem tabela de "compra parcelada"
+
+**Contexto:** O dono às vezes faz uma compra financiada (uma máquina, um ar condicionado) e precisava lançar cada parcela manualmente, mês a mês. O modelo de dados já suporta isso (`cost_entries.cost_date` aceita qualquer data, inclusive futura — ver ADR "Nunca existe fechamento ou trava do passado"), então não era um problema de modelo, só de UX repetitiva.
+
+**Decisão:** `calculateInstallmentPlan` (`costs/installments.ts`) é uma função pura que recebe valor total, número de parcelas e data da 1ª parcela, e devolve uma parcela por mês (usando `addMonthsToIsoDate`, novo helper em `lib/date.ts`, que ajusta o dia quando o mês de destino é mais curto — ex: 31/01 vira 28 ou 29/02). `useCostEntries.createInstallments` insere um `cost_entry` de verdade por parcela, de uma vez (`insert` com array no Supabase). Cada parcela criada é um lançamento comum depois — sem tabela nova, sem conceito de "compra parcelada" persistido em lugar nenhum: se o dono editar ou excluir uma parcela individual depois, é só um `cost_entry` normal sendo editado, sem nenhuma lógica especial de sincronização entre parcelas.
+
+Diferença de centavos quando o valor total não divide exato pelo número de parcelas (ex: R$1.000 ÷ 3) é distribuída como +1 centavo nas primeiras parcelas, garantindo que a soma bate exatamente com o valor total informado.
+
+**Alternativas consideradas:** Guardar o "plano de parcelamento" numa tabela própria (valor total, parcelas, categoria), com os `cost_entries` referenciando essa tabela — rejeitada por criar uma segunda fonte de verdade (o plano vs. os lançamentos de verdade) sem benefício claro no MVP: o dono não precisa "ver o plano", só precisa que as parcelas apareçam certas na lista de custos, e cada parcela editável/excluível como qualquer outra.
+
+**Consequências:** Não existe hoje um jeito de "editar todas as parcelas de uma vez" (ex: trocar a categoria de todas) nem de "cancelar as parcelas restantes" com um clique só — cada parcela criada é independente. Se isso virar uma necessidade real, um vínculo entre parcelas (ex: campo opcional `installment_group_id`) pode ser adicionado depois sem quebrar o que já existe.

@@ -50,6 +50,20 @@ export function getLastDayOfCurrentYearIso(): string {
   return `${new Date().getFullYear()}-12-31`
 }
 
+// Soma meses a uma data "AAAA-MM-DD" — usado no parcelador automático de
+// custos (ver features/costs/installments.ts). Se o dia não existir no mês
+// de destino (ex: 31/01 + 1 mês), cai pro último dia daquele mês (28/02 ou
+// 29/02), em vez de "estourar" pro mês seguinte como o construtor Date faz
+// por padrão.
+export function addMonthsToIsoDate(isoDate: string, monthsToAdd: number): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  const targetMonthIndex = month - 1 + monthsToAdd
+  const lastDayOfTargetMonth = new Date(year, targetMonthIndex + 1, 0).getDate()
+  const clampedDay = Math.min(day, lastDayOfTargetMonth)
+  const result = new Date(year, targetMonthIndex, clampedDay)
+  return `${result.getFullYear()}-${String(result.getMonth() + 1).padStart(2, '0')}-${String(result.getDate()).padStart(2, '0')}`
+}
+
 // Detecta se o período é um mês ou ano inteiro pra mostrar um rótulo mais
 // natural ("agosto de 2026", "ano de 2026") em vez da data início/fim crua —
 // usado no card de lucro do relatório de período flexível (ver issue #6).
