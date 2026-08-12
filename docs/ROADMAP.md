@@ -1,0 +1,36 @@
+# 🗺️ Roadmap
+
+Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
+
+## Fase 0 — Fundação
+- [ ] Repo configurado (branch protection, templates, CI básico)
+- [ ] Setup do projeto (Vite + Supabase conectado, deploy no Vercel funcionando com "hello world")
+- [ ] Autenticação básica (login/cadastro)
+- [ ] Modelo de dados inicial: `businesses`, `cost_categories`, `cost_entries`, `revenue_entries`, todos com RLS de dono único
+
+## Fase 1 — MVP core
+- [ ] Ficha inicial: escolher tipo de negócio (prestador de serviços / comerciante de produto) e subtipo sugerido
+- [ ] Categorias de custo pré-sugeridas pelo tipo de negócio, mas totalmente editáveis (criar, renomear, desativar)
+- [ ] Seletor de negócio ativo + fluxo de criar um segundo negócio (multi-negócio por usuário)
+- [ ] Cadastro de custos (fixo/variável/insumo) e de receitas diárias
+- [ ] Cálculo do lucro do mês, sempre recalculado ao vivo (editar um lançamento passado atualiza o número automaticamente)
+- [ ] Mecanismo de dica educativa por conceito (mostrada na primeira vez que o conceito aparece), com pelo menos 2 dicas: capital de giro e lucro ≠ caixa
+
+## Fase 2 — Polimento e aprofundamento educativo
+- [ ] Mais dicas educativas cobrindo os demais conceitos do glossário (margem, insumo, etc.)
+- [ ] Cálculo de margem por unidade vendida/atendimento
+- [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
+- [ ] Onboarding mais guiado (tour da primeira vez)
+
+## Fase 3 — Expansão
+- [ ] Controle de estoque mais detalhado (quantidade, alerta de reposição)
+- [ ] Contas a pagar/receber (regime de competência, além do regime de caixa simples do MVP)
+- [ ] Calculadora de imposto simplificada (MEI/DAS)
+- [ ] Notificações/lembretes (ex: "você ainda não lançou a receita de hoje")
+
+## Backlog / ideias futuras (não compromissadas)
+- Empacotamento como app instalável (PWA ou Capacitor, ver decisão equivalente no projeto irmão DinDin-a-Dois)
+- Integração com Open Finance / bancos, importação automática de extrato
+- Tabela `business_types` configurável no banco (painel pra editar presets sem precisar de deploy) — só se o número de verticais crescer muito
+- Sincronizar "dicas já vistas" no Supabase (hoje fica em `localStorage`, por dispositivo)
+- Múltiplos usuários com acesso a um mesmo negócio (ex: um funcionário lançando dados)
