@@ -39,4 +39,9 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
     title: '💡 Retirada não é a mesma coisa que custo',
     body: 'Quando você tira dinheiro do caixa do negócio pra uso pessoal, isso reduz o caixa (quanto dinheiro sobra), mas não é um gasto do negócio — por isso não é descontado do seu lucro. O lucro mostra quanto o negócio gerou; a retirada mostra quanto disso você já tirou pra você.',
   },
+  taxa_de_pagamento: {
+    id: 'taxa_de_pagamento',
+    title: '💡 Por que o valor lançado é diferente do que cai na conta?',
+    body: 'Quando você recebe por Pix não tem desconto, mas no cartão a maquininha ou o banco costuma cobrar uma taxa antes do dinheiro cair na sua conta. O app já desconta essa taxa automaticamente do seu lucro e do seu caixa, de acordo com a forma de pagamento que você escolher em cada receita — você pode ajustar as taxas em Ajustes → Formas de pagamento.',
+  },
 }

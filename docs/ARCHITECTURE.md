@@ -132,3 +132,19 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Modelar retirada como um `cost_entry` de uma categoria especial "Retirada" — rejeitada porque distorceria o lucro do mês (reduziria artificialmente, contradizendo o objetivo #1 do produto de mostrar lucro real); aba própria "Retiradas" no menu inferior, paralela a Custos/Receitas — rejeitada por enquanto porque o menu já tem 5 abas e retirada é uma ação mais esporádica, não diária.
 
 **Consequências:** Se o uso mostrar que retirada é lançada com bastante frequência, vale revisitar e promover pra aba própria no menu inferior.
+
+---
+
+## [2026-08-12] — Taxa de forma de pagamento: descontada ao vivo do lucro e do caixa, não vira cost_entry
+
+**Contexto:** O time queria capturar a forma de pagamento de cada receita (Pix, Débito, Crédito, Parcelado) e descontar automaticamente a taxa da maquininha do lucro real. Já existia uma coluna `revenue_entries.payment_method` (texto livre) desde o início do projeto, mas nunca foi usada em nenhuma tela — o dado ficava sempre vazio.
+
+**Decisão:** Nova tabela `payment_methods` (business_id, name, fee_percent, mesmo padrão de RLS/edição de `cost_categories`), com preset inicial em `src/features/paymentMethods/defaultPaymentMethods.ts` (Dinheiro e Pix sem taxa, Débito 3%, Crédito à vista 5%, Crédito parcelado 8% — valores de referência, editáveis). A antiga coluna `revenue_entries.payment_method` (texto livre) foi **removida** e substituída por `payment_method_id`, referência à tabela nova.
+
+A taxa **não vira um `cost_entry`** — `calculateProfitForPeriod` e `calculateAccumulatedCash` (`reports/profit.ts`) recebem um `feePercentByPaymentMethodId: Map<string, number>` e calculam `cardFeeCents` ao vivo, a partir da forma de pagamento escolhida em cada receita (`entry.amountCents × feePercent`), subtraindo do lucro (`profitCents`) e do caixa acumulado. Segue o mesmo princípio de "caixa sempre calculado ao vivo" (ver ADR de 2026-08-11): gerar um `cost_entry` automático a cada receita exigiria manter os dois sincronizados toda vez que a receita ou a forma de pagamento mudasse, criando risco de divergência.
+
+Importante: a taxa **não entra no cálculo de `marginPerUnitCents`** (margem por unidade) — só é descontada no nível do lucro total do período. Misturar os dois exigiria decidir taxa por unidade vendida numa receita que pode ter várias unidades e uma única forma de pagamento, complexidade não resolvida nesta mudança.
+
+**Alternativas consideradas:** Manter a taxa como informativa (mostrar "líquido após taxa" sem alterar o lucro) — rejeitada porque o objetivo #1 do produto é mostrar o lucro real, e a taxa é dinheiro que de fato nunca chega a entrar no caixa; gerar um `cost_entry` automático por receita com forma de pagamento — rejeitada pelo risco de dessincronia descrito acima; taxas fixas no código, sem tabela editável — rejeitada porque a taxa real varia por maquininha/banco/plano de cada pessoa, tornar isso fixo tornaria o número errado pra maioria dos usuários.
+
+**Consequências:** Editar a taxa de uma forma de pagamento em Ajustes muda o lucro de **todo o histórico** que usou essa forma de pagamento, não só dos lançamentos futuros — comportamento esperado nesse produto (nunca tranca o passado, ver ADR de 2026-08-11), mas vale deixar isso claro pro time. Excluir uma forma de pagamento não apaga lançamentos, só os deixa "sem forma de pagamento" (sem taxa descontada) até serem reclassificados, mesmo padrão de categoria excluída.

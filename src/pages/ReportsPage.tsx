@@ -3,6 +3,7 @@ import { Card } from '../components/Card'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from '../features/reports/profit'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
@@ -24,6 +25,7 @@ interface ReportsPageProps {
 
 export function ReportsPage({ business }: ReportsPageProps) {
   const { categories } = useCostCategories(business.id)
+  const { paymentMethods } = usePaymentMethods(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const { withdrawals, isLoading: isLoadingWithdrawals } = useWithdrawals(business.id)
@@ -34,10 +36,15 @@ export function ReportsPage({ business }: ReportsPageProps) {
     () => new Map<string, CostKind>(categories.map((category) => [category.id, category.kind])),
     [categories],
   )
+  const feePercentByPaymentMethodId = useMemo(
+    () => new Map(paymentMethods.map((method) => [method.id, method.feePercent])),
+    [paymentMethods],
+  )
 
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
+    () =>
+      calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById, feePercentByPaymentMethodId),
+    [startDate, endDate, costEntries, revenueEntries, categoryKindById, feePercentByPaymentMethodId],
   )
 
   const withdrawalsCents = useMemo(

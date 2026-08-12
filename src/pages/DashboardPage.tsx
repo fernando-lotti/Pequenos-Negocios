@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateAccumulatedCash, calculateProfitForPeriod } from '../features/reports/profit'
@@ -19,6 +20,7 @@ interface DashboardPageProps {
 
 export function DashboardPage({ business }: DashboardPageProps) {
   const { categories } = useCostCategories(business.id)
+  const { paymentMethods } = usePaymentMethods(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const {
@@ -34,16 +36,21 @@ export function DashboardPage({ business }: DashboardPageProps) {
     () => new Map<string, CostKind>(categories.map((category) => [category.id, category.kind])),
     [categories],
   )
+  const feePercentByPaymentMethodId = useMemo(
+    () => new Map(paymentMethods.map((method) => [method.id, method.feePercent])),
+    [paymentMethods],
+  )
 
   const startDate = getFirstDayOfCurrentMonthIso()
   const endDate = getLastDayOfCurrentMonthIso()
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
+    () =>
+      calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById, feePercentByPaymentMethodId),
+    [startDate, endDate, costEntries, revenueEntries, categoryKindById, feePercentByPaymentMethodId],
   )
   const cashCents = useMemo(
-    () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals),
-    [costEntries, revenueEntries, withdrawals],
+    () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals, feePercentByPaymentMethodId),
+    [costEntries, revenueEntries, withdrawals, feePercentByPaymentMethodId],
   )
 
   if (isLoadingCosts || isLoadingRevenue || isLoadingWithdrawals) {

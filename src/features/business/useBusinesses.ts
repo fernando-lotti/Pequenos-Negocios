@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { DEFAULT_PAYMENT_METHODS } from '../paymentMethods/defaultPaymentMethods'
 import { getCostCategoryPreset, getRevenueCategoryPreset } from './businessTypePresets'
 import type { Business, NewBusinessInput } from './types'
 
@@ -124,6 +125,21 @@ export function useBusinesses(userId: string | null): UseBusinessesResult {
       if (revenueSeedError) {
         console.error('Erro ao criar categorias de receita sugeridas:', revenueSeedError)
       }
+    }
+
+    // Seed das formas de pagamento (Pix, Débito, Crédito...) com taxas de
+    // referência — diferente das categorias, não depende do tipo/subtipo de
+    // negócio (ver defaultPaymentMethods.ts). Também só o ponto de partida,
+    // totalmente editável depois em Ajustes.
+    const { error: paymentMethodSeedError } = await supabase.from('payment_methods').insert(
+      DEFAULT_PAYMENT_METHODS.map((method) => ({
+        business_id: business.id,
+        name: method.name,
+        fee_percent: method.feePercent,
+      })),
+    )
+    if (paymentMethodSeedError) {
+      console.error('Erro ao criar formas de pagamento sugeridas:', paymentMethodSeedError)
     }
 
     setBusinesses((current) => [...current, business])

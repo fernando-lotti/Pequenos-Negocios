@@ -12,6 +12,12 @@ export interface ProfitBreakdown {
   // o valor gasto continua contando no lucro, só não sabemos se era custo
   // fixo ou variável até alguém reclassificar o lançamento.
   uncategorizedCostCents: number
+  // Soma das taxas de forma de pagamento (Pix, Débito, Crédito...) sobre as
+  // receitas do período — ver PaymentMethodManager.tsx. Descontada do
+  // lucro à parte dos custos fixos/variáveis porque não é um cost_entry
+  // lançado pelo usuário, é calculada ao vivo a partir da forma de
+  // pagamento escolhida em cada receita (ver ADR em docs/ARCHITECTURE.md).
+  cardFeeCents: number
   totalCostCents: number
   profitCents: number
   // Soma da "Quantidade" (opcional) informada nos lançamentos de receita do
@@ -41,6 +47,7 @@ export function calculateProfitForPeriod(
   costEntries: CostEntry[],
   revenueEntries: RevenueEntry[],
   categoryKindById: Map<string, CostKind>,
+  feePercentByPaymentMethodId: Map<string, number> = new Map(),
 ): ProfitBreakdown {
   const periodRevenueEntries = revenueEntries.filter(
     (entry) => entry.revenueDate >= startDate && entry.revenueDate <= endDate,
@@ -49,6 +56,12 @@ export function calculateProfitForPeriod(
   const revenueCents = periodRevenueEntries.reduce((total, entry) => total + entry.amountCents, 0)
 
   const unitsSoldTotal = periodRevenueEntries.reduce((total, entry) => total + (entry.unitsSold ?? 0), 0)
+
+  const cardFeeCents = periodRevenueEntries.reduce((total, entry) => {
+    const feePercent = entry.paymentMethodId ? feePercentByPaymentMethodId.get(entry.paymentMethodId) : undefined
+    if (!feePercent) return total
+    return total + Math.round((entry.amountCents * feePercent) / 100)
+  }, 0)
 
   let fixedCostCents = 0
   let variableCostCents = 0
@@ -74,8 +87,9 @@ export function calculateProfitForPeriod(
     fixedCostCents,
     variableCostCents,
     uncategorizedCostCents,
+    cardFeeCents,
     totalCostCents,
-    profitCents: revenueCents - totalCostCents,
+    profitCents: revenueCents - totalCostCents - cardFeeCents,
     unitsSoldTotal,
     marginPerUnitCents,
   }
@@ -99,11 +113,21 @@ export function calculateAccumulatedCash(
   costEntries: CostEntry[],
   revenueEntries: RevenueEntry[],
   withdrawals: Withdrawal[],
+  feePercentByPaymentMethodId: Map<string, number> = new Map(),
 ): number {
   const totalRevenueCents = revenueEntries.reduce((total, entry) => total + entry.amountCents, 0)
   const totalCostCents = costEntries.reduce((total, entry) => total + entry.amountCents, 0)
   const totalWithdrawalCents = withdrawals.reduce((total, withdrawal) => total + withdrawal.amountCents, 0)
-  return totalRevenueCents - totalCostCents - totalWithdrawalCents
+  // Mesmo cálculo de cardFeeCents em calculateProfitForPeriod, mas sobre o
+  // histórico inteiro — o dinheiro que a maquininha desconta nunca chega a
+  // entrar no caixa de verdade, então precisa sair daqui também, não só do
+  // lucro (ver ADR em docs/ARCHITECTURE.md).
+  const totalCardFeeCents = revenueEntries.reduce((total, entry) => {
+    const feePercent = entry.paymentMethodId ? feePercentByPaymentMethodId.get(entry.paymentMethodId) : undefined
+    if (!feePercent) return total
+    return total + Math.round((entry.amountCents * feePercent) / 100)
+  }, 0)
+  return totalRevenueCents - totalCostCents - totalWithdrawalCents - totalCardFeeCents
 }
 
 /** Soma das retiradas de um período (mesmo intervalo inclusivo usado em calculateProfitForPeriod) — usada nos relatórios, separado dos custos. */
