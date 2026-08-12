@@ -55,14 +55,25 @@ export function CostCategoryManager({ categories, usedCategoryIds, onCreate, onU
   const [editingName, setEditingName] = useState('')
   const [editingKind, setEditingKind] = useState<CostKind>('variable')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Categoria aguardando confirmação de exclusão (só quando já tem
+  // lançamento). Usamos um aviso na própria tela em vez de window.confirm()
+  // porque esse app é instalado como PWA (ver public/manifest.webmanifest,
+  // "display": "standalone") — nesse modo, o iOS ignora silenciosamente
+  // confirm()/alert() nativos, então o aviso nunca apareceria.
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault()
     if (!newName.trim()) return
     setIsSubmitting(true)
+    setError('')
     try {
       await onCreate({ name: newName.trim(), kind: newKind })
       setNewName('')
+    } catch (createError) {
+      console.error('Erro ao criar categoria:', createError)
+      setError('Não foi possível criar essa categoria agora. Tente novamente.')
     } finally {
       setIsSubmitting(false)
     }
@@ -72,6 +83,7 @@ export function CostCategoryManager({ categories, usedCategoryIds, onCreate, onU
     setEditingId(category.id)
     setEditingName(category.name)
     setEditingKind(category.kind)
+    setError('')
   }
 
   function cancelEditing() {
@@ -80,46 +92,88 @@ export function CostCategoryManager({ categories, usedCategoryIds, onCreate, onU
 
   async function saveEditing(id: string) {
     if (!editingName.trim()) return
-    await onUpdate(id, { name: editingName.trim(), kind: editingKind })
-    setEditingId(null)
+    setError('')
+    try {
+      await onUpdate(id, { name: editingName.trim(), kind: editingKind })
+      setEditingId(null)
+    } catch (updateError) {
+      console.error('Erro ao editar categoria:', updateError)
+      setError('Não foi possível salvar essa edição agora. Tente novamente.')
+    }
   }
 
-  async function handleDelete(category: CostCategory) {
+  function handleDeleteClick(category: CostCategory) {
+    setError('')
     if (usedCategoryIds.has(category.id)) {
-      const confirmed = window.confirm(
-        `Excluir "${category.name}"? Ela já tem lançamento de custo. Esses lançamentos não serão apagados, mas vão ficar ` +
-          'sem categoria até você editá-los e escolher outra.',
-      )
-      if (!confirmed) return
+      setConfirmingDeleteId(category.id)
+    } else {
+      onDelete(category.id).catch((deleteError) => {
+        console.error('Erro ao excluir categoria:', deleteError)
+        setError('Não foi possível excluir essa categoria agora. Tente novamente.')
+      })
     }
-    await onDelete(category.id)
+  }
+
+  async function confirmDelete(id: string) {
+    setError('')
+    try {
+      await onDelete(id)
+      setConfirmingDeleteId(null)
+    } catch (deleteError) {
+      console.error('Erro ao excluir categoria:', deleteError)
+      setError('Não foi possível excluir essa categoria agora. Tente novamente.')
+    }
   }
 
   return (
     <Card>
       <p className="font-semibold text-slate-900">Categorias de custo</p>
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <ul className="mt-3 flex flex-col gap-2">
-        {categories.map((category) =>
-          editingId === category.id ? (
-            <li key={category.id} className="flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
-              <input
-                autoFocus
-                value={editingName}
-                onChange={(event) => setEditingName(event.target.value)}
-                className={fieldClass}
-              />
-              <CostKindPicker value={editingKind} onChange={setEditingKind} />
-              <div className="flex gap-2">
-                <PrimaryButton type="button" onClick={() => saveEditing(category.id)} disabled={!editingName.trim()}>
-                  Salvar
-                </PrimaryButton>
-                <PrimaryButton type="button" variant="secondary" onClick={cancelEditing}>
-                  Cancelar
-                </PrimaryButton>
-              </div>
-            </li>
-          ) : (
+        {categories.map((category) => {
+          if (editingId === category.id) {
+            return (
+              <li key={category.id} className="flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
+                <input
+                  autoFocus
+                  value={editingName}
+                  onChange={(event) => setEditingName(event.target.value)}
+                  className={fieldClass}
+                />
+                <CostKindPicker value={editingKind} onChange={setEditingKind} />
+                <div className="flex gap-2">
+                  <PrimaryButton type="button" onClick={() => saveEditing(category.id)} disabled={!editingName.trim()}>
+                    Salvar
+                  </PrimaryButton>
+                  <PrimaryButton type="button" variant="secondary" onClick={cancelEditing}>
+                    Cancelar
+                  </PrimaryButton>
+                </div>
+              </li>
+            )
+          }
+
+          if (confirmingDeleteId === category.id) {
+            return (
+              <li key={category.id} className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-sm text-red-900">
+                  Excluir "{category.name}"? Ela já tem lançamento de custo. Esses lançamentos não serão apagados, mas vão
+                  ficar sem categoria até você editá-los e escolher outra.
+                </p>
+                <div className="flex gap-2">
+                  <PrimaryButton type="button" variant="danger" onClick={() => confirmDelete(category.id)}>
+                    Excluir mesmo assim
+                  </PrimaryButton>
+                  <PrimaryButton type="button" variant="secondary" onClick={() => setConfirmingDeleteId(null)}>
+                    Cancelar
+                  </PrimaryButton>
+                </div>
+              </li>
+            )
+          }
+
+          return (
             <li
               key={category.id}
               className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2"
@@ -135,7 +189,7 @@ export function CostCategoryManager({ categories, usedCategoryIds, onCreate, onU
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(category)}
+                  onClick={() => handleDeleteClick(category)}
                   aria-label={`Excluir categoria ${category.name}`}
                   className="text-xs text-red-600 underline"
                 >
@@ -143,8 +197,8 @@ export function CostCategoryManager({ categories, usedCategoryIds, onCreate, onU
                 </button>
               </div>
             </li>
-          ),
-        )}
+          )
+        })}
         {categories.length === 0 && <p className="text-sm text-slate-500">Nenhuma categoria ainda.</p>}
       </ul>
 
