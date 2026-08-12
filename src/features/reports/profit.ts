@@ -1,9 +1,9 @@
-import { getMonthKeyFromIsoDate } from '../../lib/date'
 import type { CostEntry, CostKind } from '../costs/types'
 import type { RevenueEntry } from '../revenue/types'
 
-export interface MonthlyProfitBreakdown {
-  monthKey: string
+export interface ProfitBreakdown {
+  startDate: string
+  endDate: string
   revenueCents: number
   fixedCostCents: number
   variableCostCents: number
@@ -28,26 +28,33 @@ export interface MonthlyProfitBreakdown {
 // Função pura, sem chamada ao Supabase — recebe os lançamentos já
 // carregados e sempre recalcula do zero. Este produto nunca tranca o
 // passado (ver docs/ARCHITECTURE.md): não existe "lucro fechado" salvo em
-// lugar nenhum, editar um lançamento de um mês qualquer muda o resultado
-// na próxima vez que esta função rodar.
-export function calculateMonthlyProfit(
-  monthKey: string,
+// lugar nenhum, editar um lançamento de um período qualquer muda o
+// resultado na próxima vez que esta função rodar.
+//
+// startDate e endDate são datas "AAAA-MM-DD" (mesmo formato salvo no banco)
+// e o intervalo é inclusivo dos dois lados — dá pra comparar como texto
+// porque esse formato ordena igual à data real.
+export function calculateProfitForPeriod(
+  startDate: string,
+  endDate: string,
   costEntries: CostEntry[],
   revenueEntries: RevenueEntry[],
   categoryKindById: Map<string, CostKind>,
-): MonthlyProfitBreakdown {
-  const monthRevenueEntries = revenueEntries.filter((entry) => getMonthKeyFromIsoDate(entry.revenueDate) === monthKey)
+): ProfitBreakdown {
+  const periodRevenueEntries = revenueEntries.filter(
+    (entry) => entry.revenueDate >= startDate && entry.revenueDate <= endDate,
+  )
 
-  const revenueCents = monthRevenueEntries.reduce((total, entry) => total + entry.amountCents, 0)
+  const revenueCents = periodRevenueEntries.reduce((total, entry) => total + entry.amountCents, 0)
 
-  const unitsSoldTotal = monthRevenueEntries.reduce((total, entry) => total + (entry.unitsSold ?? 0), 0)
+  const unitsSoldTotal = periodRevenueEntries.reduce((total, entry) => total + (entry.unitsSold ?? 0), 0)
 
   let fixedCostCents = 0
   let variableCostCents = 0
   let uncategorizedCostCents = 0
 
   for (const entry of costEntries) {
-    if (getMonthKeyFromIsoDate(entry.costDate) !== monthKey) continue
+    if (entry.costDate < startDate || entry.costDate > endDate) continue
     const kind = entry.costCategoryId ? categoryKindById.get(entry.costCategoryId) : undefined
     if (kind === 'fixed') fixedCostCents += entry.amountCents
     else if (kind === 'variable') variableCostCents += entry.amountCents
@@ -60,7 +67,8 @@ export function calculateMonthlyProfit(
     unitsSoldTotal > 0 ? Math.round((revenueCents - variableCostCents) / unitsSoldTotal) : null
 
   return {
-    monthKey,
+    startDate,
+    endDate,
     revenueCents,
     fixedCostCents,
     variableCostCents,
@@ -70,6 +78,13 @@ export function calculateMonthlyProfit(
     unitsSoldTotal,
     marginPerUnitCents,
   }
+}
+
+/** Data do lançamento (custo ou receita) mais antigo — usado no atalho "Desde o início" dos relatórios. */
+export function getEarliestEntryDate(costEntries: CostEntry[], revenueEntries: RevenueEntry[]): string | null {
+  const allDates = [...costEntries.map((entry) => entry.costDate), ...revenueEntries.map((entry) => entry.revenueDate)]
+  if (allDates.length === 0) return null
+  return allDates.reduce((earliest, date) => (date < earliest ? date : earliest))
 }
 
 /** Caixa acumulado (histórico completo, não só do mês) — ver DailyCashSummary.tsx. */
