@@ -1,6 +1,13 @@
+import { useMemo } from 'react'
 import { Card } from '../components/Card'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { BUSINESS_TYPE_INFO } from '../features/business/businessTypePresets'
+import { CostCategoryManager } from '../features/costs/CostCategoryManager'
+import { useCostCategories } from '../features/costs/useCostCategories'
+import { useCostEntries } from '../features/costs/useCostEntries'
+import { RevenueCategoryManager } from '../features/revenue/RevenueCategoryManager'
+import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
+import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { supabase } from '../lib/supabase'
 import type { Business } from '../features/business/types'
 
@@ -9,7 +16,46 @@ interface SettingsPageProps {
   userEmail: string
 }
 
+// O cadastro de categorias (de custo e de receita) mora aqui, em vez de
+// dentro das telas de Custos/Receitas, porque é uma tarefa de configuração
+// do negócio, não do dia a dia de lançar valores — os formulários de
+// lançamento levam pra cá através da opção "+ Nova categoria" (ver
+// CostEntryForm.tsx e RevenueEntryForm.tsx).
 export function SettingsPage({ business, userEmail }: SettingsPageProps) {
+  const {
+    categories: costCategories,
+    isLoading: isLoadingCostCategories,
+    createCategory: createCostCategory,
+    updateCategory: updateCostCategory,
+    deleteCategory: deleteCostCategory,
+  } = useCostCategories(business.id)
+  const { entries: costEntries, isLoading: isLoadingCostEntries } = useCostEntries(business.id)
+
+  const {
+    categories: revenueCategories,
+    isLoading: isLoadingRevenueCategories,
+    createCategory: createRevenueCategory,
+    updateCategory: updateRevenueCategory,
+    deleteCategory: deleteRevenueCategory,
+  } = useRevenueCategories(business.id)
+  const { entries: revenueEntries, isLoading: isLoadingRevenueEntries } = useRevenueEntries(business.id)
+
+  const usedCostCategoryIds = useMemo(
+    () => new Set(costEntries.map((entry) => entry.costCategoryId).filter((id): id is string => id !== null)),
+    [costEntries],
+  )
+  const usedRevenueCategoryIds = useMemo(
+    () => new Set(revenueEntries.map((entry) => entry.revenueCategoryId).filter((id): id is string => id !== null)),
+    [revenueEntries],
+  )
+
+  const isLoading =
+    isLoadingCostCategories || isLoadingCostEntries || isLoadingRevenueCategories || isLoadingRevenueEntries
+
+  if (isLoading) {
+    return <p className="p-4 text-sm text-slate-500">Carregando...</p>
+  }
+
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <h1 className="text-lg font-bold text-slate-900">Ajustes</h1>
@@ -22,6 +68,22 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
           Pra adicionar outro negócio, use o botão "+ Novo negócio" no topo da tela.
         </p>
       </Card>
+
+      <CostCategoryManager
+        categories={costCategories}
+        usedCategoryIds={usedCostCategoryIds}
+        onCreate={createCostCategory}
+        onUpdate={updateCostCategory}
+        onDelete={deleteCostCategory}
+      />
+
+      <RevenueCategoryManager
+        categories={revenueCategories}
+        usedCategoryIds={usedRevenueCategoryIds}
+        onCreate={createRevenueCategory}
+        onUpdate={updateRevenueCategory}
+        onDelete={deleteRevenueCategory}
+      />
 
       <Card>
         <p className="text-sm text-slate-500">Conta</p>

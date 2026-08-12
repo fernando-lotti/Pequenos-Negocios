@@ -8,15 +8,27 @@ import { getTodayAsIsoDate } from '../../lib/date'
 import type { RevenueCategory, RevenueEntry } from './types'
 import type { NewRevenueEntryInput } from './useRevenueEntries'
 
+// Ver comentário equivalente em CostEntryForm.tsx.
+const NEW_CATEGORY_OPTION_VALUE = '__new__'
+
 interface RevenueEntryFormProps {
   categories: RevenueCategory[]
   onSubmit: (input: NewRevenueEntryInput) => Promise<unknown>
   // Ver comentário equivalente em CostEntryForm.tsx.
   entryToEdit?: RevenueEntry | null
   onCancelEdit?: () => void
+  // Leva pra aba Ajustes, onde agora fica o cadastro de categorias de
+  // receita (ver SettingsPage.tsx) — usado pela opção "+ Nova categoria".
+  onManageCategories: () => void
 }
 
-export function RevenueEntryForm({ categories, onSubmit, entryToEdit, onCancelEdit }: RevenueEntryFormProps) {
+export function RevenueEntryForm({
+  categories,
+  onSubmit,
+  entryToEdit,
+  onCancelEdit,
+  onManageCategories,
+}: RevenueEntryFormProps) {
   // Diferente de categoria de custo, categoria de receita é opcional — nem
   // todo negócio precisa separar de onde vem a receita, então o padrão é
   // "Sem categoria" (valor vazio) em vez de forçar a primeira da lista.
@@ -75,15 +87,21 @@ export function RevenueEntryForm({ categories, onSubmit, entryToEdit, onCancelEd
       <p className="font-semibold text-slate-900">{entryToEdit ? 'Editar receita' : 'Lançar receita do dia'}</p>
 
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3">
-        {categories.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor="revenue-category" className={labelClass}>
-              Categoria (opcional)
-            </label>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="revenue-category" className={labelClass}>
+            Categoria (opcional)
+          </label>
+          {categories.length > 0 ? (
             <select
               id="revenue-category"
               value={revenueCategoryId}
-              onChange={(event) => setRevenueCategoryId(event.target.value)}
+              onChange={(event) => {
+                if (event.target.value === NEW_CATEGORY_OPTION_VALUE) {
+                  onManageCategories()
+                  return
+                }
+                setRevenueCategoryId(event.target.value)
+              }}
               className={fieldClass}
             >
               <option value="">Sem categoria</option>
@@ -92,9 +110,18 @@ export function RevenueEntryForm({ categories, onSubmit, entryToEdit, onCancelEd
                   {category.name}
                 </option>
               ))}
+              <option value={NEW_CATEGORY_OPTION_VALUE}>+ Nova categoria</option>
             </select>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={onManageCategories}
+              className="rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-emerald-700"
+            >
+              + Cadastrar categoria de receita
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">

@@ -28,8 +28,12 @@ function AuthenticatedApp({ user, businesses, activeBusiness, setActiveBusinessI
       </header>
 
       {activeTab === 'dashboard' && <DashboardPage business={activeBusiness} />}
-      {activeTab === 'costs' && <CostsPage business={activeBusiness} />}
-      {activeTab === 'revenue' && <RevenuePage business={activeBusiness} />}
+      {activeTab === 'costs' && (
+        <CostsPage business={activeBusiness} onManageCategories={() => navigateToTab('settings')} />
+      )}
+      {activeTab === 'revenue' && (
+        <RevenuePage business={activeBusiness} onManageCategories={() => navigateToTab('settings')} />
+      )}
       {activeTab === 'reports' && <ReportsPage business={activeBusiness} />}
       {activeTab === 'settings' && <SettingsPage business={activeBusiness} userEmail={user.email ?? ''} />}
 

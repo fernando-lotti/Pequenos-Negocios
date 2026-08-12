@@ -9,6 +9,12 @@ import { COST_KIND_LABELS } from './types'
 import type { CostCategory, CostEntry } from './types'
 import type { NewCostEntryInput } from './useCostEntries'
 
+// Valor "sentinela" da opção "+ Nova categoria" no <select> — nunca colide
+// com um id de categoria de verdade (que são uuid). Ao escolher essa opção,
+// não mudamos a categoria selecionada: só navegamos pra Ajustes, onde fica
+// o cadastro de categorias (ver SettingsPage.tsx).
+const NEW_CATEGORY_OPTION_VALUE = '__new__'
+
 interface CostEntryFormProps {
   categories: CostCategory[]
   onSubmit: (input: NewCostEntryInput) => Promise<unknown>
@@ -18,9 +24,12 @@ interface CostEntryFormProps {
   // (ver CostsPage.tsx) — mais simples do que sincronizar estado via effect.
   entryToEdit?: CostEntry | null
   onCancelEdit?: () => void
+  // Leva pra aba Ajustes, onde agora fica o cadastro de categorias de custo
+  // (ver SettingsPage.tsx) — usado pela opção "+ Nova categoria" do seletor.
+  onManageCategories: () => void
 }
 
-export function CostEntryForm({ categories, onSubmit, entryToEdit, onCancelEdit }: CostEntryFormProps) {
+export function CostEntryForm({ categories, onSubmit, entryToEdit, onCancelEdit, onManageCategories }: CostEntryFormProps) {
   // Se o lançamento sendo editado ficou "sem categoria" (a categoria dele
   // foi excluída — ver CostCategoryManager.tsx), esse "??" já cai pra
   // primeira categoria disponível, pedindo pra pessoa escolher uma nova.
@@ -83,18 +92,35 @@ export function CostEntryForm({ categories, onSubmit, entryToEdit, onCancelEdit 
           <label htmlFor="cost-category" className={labelClass}>
             Categoria
           </label>
-          <select
-            id="cost-category"
-            value={costCategoryId}
-            onChange={(event) => setCostCategoryId(event.target.value)}
-            className={fieldClass}
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name} — {COST_KIND_LABELS[category.kind]}
-              </option>
-            ))}
-          </select>
+          {categories.length > 0 ? (
+            <select
+              id="cost-category"
+              value={costCategoryId}
+              onChange={(event) => {
+                if (event.target.value === NEW_CATEGORY_OPTION_VALUE) {
+                  onManageCategories()
+                  return
+                }
+                setCostCategoryId(event.target.value)
+              }}
+              className={fieldClass}
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name} — {COST_KIND_LABELS[category.kind]}
+                </option>
+              ))}
+              <option value={NEW_CATEGORY_OPTION_VALUE}>+ Nova categoria</option>
+            </select>
+          ) : (
+            <button
+              type="button"
+              onClick={onManageCategories}
+              className="rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-emerald-700"
+            >
+              + Cadastrar categoria de custo
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

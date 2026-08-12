@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import { CostCategoryManager } from '../features/costs/CostCategoryManager'
+import { useState } from 'react'
 import { CostEntryForm } from '../features/costs/CostEntryForm'
 import { CostEntryList } from '../features/costs/CostEntryList'
 import { useCostCategories } from '../features/costs/useCostCategories'
@@ -10,23 +9,15 @@ import type { Business } from '../features/business/types'
 
 interface CostsPageProps {
   business: Business
+  // Ver comentário em CostEntryForm.tsx — leva pra aba Ajustes, onde agora
+  // fica o cadastro de categorias de custo.
+  onManageCategories: () => void
 }
 
-export function CostsPage({ business }: CostsPageProps) {
-  const {
-    categories,
-    isLoading: isLoadingCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-  } = useCostCategories(business.id)
+export function CostsPage({ business, onManageCategories }: CostsPageProps) {
+  const { categories, isLoading: isLoadingCategories } = useCostCategories(business.id)
   const { entries, isLoading: isLoadingEntries, createEntry, updateEntry, deleteEntry } = useCostEntries(business.id)
   const [editingEntry, setEditingEntry] = useState<CostEntry | null>(null)
-
-  const usedCategoryIds = useMemo(
-    () => new Set(entries.map((entry) => entry.costCategoryId).filter((id): id is string => id !== null)),
-    [entries],
-  )
 
   if (isLoadingCategories || isLoadingEntries) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
@@ -42,13 +33,7 @@ export function CostsPage({ business }: CostsPageProps) {
         entryToEdit={editingEntry}
         onCancelEdit={() => setEditingEntry(null)}
         onSubmit={(input) => (editingEntry ? updateEntry(editingEntry.id, input) : createEntry(input))}
-      />
-      <CostCategoryManager
-        categories={categories}
-        usedCategoryIds={usedCategoryIds}
-        onCreate={createCategory}
-        onUpdate={updateCategory}
-        onDelete={deleteCategory}
+        onManageCategories={onManageCategories}
       />
       <CostEntryList entries={entries} categories={categories} onEdit={setEditingEntry} onDelete={deleteEntry} />
     </div>
