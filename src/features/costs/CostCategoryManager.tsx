@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Card } from '../../components/Card'
 import { PrimaryButton } from '../../components/PrimaryButton'
 import { fieldClass } from '../../components/Field'
+import { InfoTooltip } from '../education/InfoTooltip'
 import { COST_KIND_LABELS } from './types'
 import type { CostCategory, CostKind } from './types'
 
@@ -61,6 +62,17 @@ export function CostCategoryManager({ categories, onCreate, onRename, onSetActiv
         >
           {showInactive ? 'Ocultar desativadas' : 'Mostrar desativadas'}
         </button>
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1">
+          Custo fixo
+          <InfoTooltip conceptId="custo_fixo" />
+        </span>
+        <span className="inline-flex items-center gap-1">
+          Custo variável
+          <InfoTooltip conceptId="custo_variavel" />
+        </span>
       </div>
 
       <ul className="mt-3 flex flex-col gap-2">

@@ -30,9 +30,6 @@ export function MonthlyProfitCard({ breakdown }: MonthlyProfitCardProps) {
 
         <dt className="text-slate-500">Custos variáveis</dt>
         <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.variableCostCents)}</dd>
-
-        <dt className="text-slate-500">Insumos</dt>
-        <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.inputCostCents)}</dd>
       </dl>
     </Card>
   )

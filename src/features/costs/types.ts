@@ -1,9 +1,8 @@
-export type CostKind = 'fixed' | 'variable' | 'input'
+export type CostKind = 'fixed' | 'variable'
 
 export const COST_KIND_LABELS: Record<CostKind, string> = {
   fixed: 'Custo fixo',
   variable: 'Custo variável',
-  input: 'Insumo',
 }
 
 export interface CostCategory {

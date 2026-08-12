@@ -27,11 +27,6 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
   custo_variavel: {
     id: 'custo_variavel',
     title: '💡 O que é custo variável?',
-    body: 'É o gasto que muda de acordo com o quanto você vende ou trabalha — quanto mais você vende, mais desse custo você tem (ex: combustível de mais corridas, embalagens de mais vendas).',
-  },
-  insumo: {
-    id: 'insumo',
-    title: '💡 O que é insumo?',
-    body: 'É o material que se transforma ou é consumido em cada venda ou atendimento — como o milho e o óleo de uma pipoca, ou o produto usado numa maquiagem. Sem insumo, não tem o que vender.',
+    body: 'É o gasto que muda de acordo com o quanto você vende ou trabalha — quanto mais você vende, mais desse custo você tem. Exemplos: combustível de mais corridas, embalagens de mais vendas, ou o insumo consumido em cada venda/atendimento (milho e óleo de uma pipoca, produto usado numa maquiagem).',
   },
 }

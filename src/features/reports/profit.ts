@@ -7,7 +7,6 @@ export interface MonthlyProfitBreakdown {
   revenueCents: number
   fixedCostCents: number
   variableCostCents: number
-  inputCostCents: number
   totalCostCents: number
   profitCents: number
 }
@@ -29,24 +28,21 @@ export function calculateMonthlyProfit(
 
   let fixedCostCents = 0
   let variableCostCents = 0
-  let inputCostCents = 0
 
   for (const entry of costEntries) {
     if (getMonthKeyFromIsoDate(entry.costDate) !== monthKey) continue
     const kind = categoryKindById.get(entry.costCategoryId)
     if (kind === 'fixed') fixedCostCents += entry.amountCents
     else if (kind === 'variable') variableCostCents += entry.amountCents
-    else if (kind === 'input') inputCostCents += entry.amountCents
   }
 
-  const totalCostCents = fixedCostCents + variableCostCents + inputCostCents
+  const totalCostCents = fixedCostCents + variableCostCents
 
   return {
     monthKey,
     revenueCents,
     fixedCostCents,
     variableCostCents,
-    inputCostCents,
     totalCostCents,
     profitCents: revenueCents - totalCostCents,
   }

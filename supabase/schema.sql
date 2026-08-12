@@ -57,7 +57,8 @@ using (owner_id = auth.uid());
 -- ----------------------------------------------------------------------------
 -- Tabela: cost_categories ("Categoria de custo", ver GLOSSARY.md)
 --
--- kind = 'fixed' | 'variable' | 'input' (custo fixo, variável ou insumo).
+-- kind = 'fixed' | 'variable' (custo fixo ou variável — insumo é tratado
+-- como um caso de custo variável, não é um tipo próprio).
 -- A ficha inicial cria um conjunto inicial de categorias a partir do preset
 -- do tipo/subtipo de negócio (ver src/features/business/businessTypePresets.ts),
 -- mas elas são só o ponto de partida: o usuário pode renomear, criar novas
@@ -68,7 +69,7 @@ create table if not exists cost_categories (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses (id) on delete cascade,
   name text not null,
-  kind text not null check (kind in ('fixed', 'variable', 'input')),
+  kind text not null check (kind in ('fixed', 'variable')),
   unit_label text,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
@@ -178,3 +179,17 @@ create index if not exists idx_cost_entries_business_id on cost_entries (busines
 create index if not exists idx_cost_entries_cost_date on cost_entries (business_id, cost_date);
 create index if not exists idx_revenue_entries_business_id on revenue_entries (business_id);
 create index if not exists idx_revenue_entries_revenue_date on revenue_entries (business_id, revenue_date);
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia
+-- ANTES desta mudança (removemos 'insumo' como tipo próprio de custo; agora
+-- ele conta como custo variável). Projeto novo, rodando o arquivo inteiro
+-- pela primeira vez, pode ignorar este bloco — as tabelas acima já nascem
+-- sem 'input'.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+update cost_categories set kind = 'variable' where kind = 'input';
+
+alter table cost_categories drop constraint if exists cost_categories_kind_check;
+alter table cost_categories add constraint cost_categories_kind_check check (kind in ('fixed', 'variable'));

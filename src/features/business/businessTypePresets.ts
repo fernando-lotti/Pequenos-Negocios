@@ -50,7 +50,7 @@ export const BUSINESS_SUBTYPES: Record<BusinessType, BusinessSubtypeOption[]> = 
   ],
 }
 
-export type CostCategoryKind = 'fixed' | 'variable' | 'input'
+export type CostCategoryKind = 'fixed' | 'variable'
 
 export interface CostCategoryPreset {
   name: string
@@ -65,32 +65,32 @@ const COST_CATEGORY_PRESETS: Record<string, CostCategoryPreset[]> = {
     { name: 'Taxas do aplicativo', kind: 'variable' },
   ],
   maquiadora: [
-    { name: 'Produtos de maquiagem', kind: 'input' },
+    { name: 'Produtos de maquiagem', kind: 'variable' },
     { name: 'Aluguel do espaço', kind: 'fixed' },
     { name: 'Deslocamento até o cliente', kind: 'variable' },
   ],
   cabeleireiro: [
-    { name: 'Produtos (shampoo, tinta, etc.)', kind: 'input' },
+    { name: 'Produtos (shampoo, tinta, etc.)', kind: 'variable' },
     { name: 'Aluguel da cadeira ou do salão', kind: 'fixed' },
     { name: 'Energia e água', kind: 'fixed' },
   ],
   pipoqueiro: [
-    { name: 'Milho e óleo', kind: 'input' },
+    { name: 'Milho e óleo', kind: 'variable' },
     { name: 'Gás ou eletricidade', kind: 'fixed' },
     { name: 'Embalagens', kind: 'variable' },
     { name: 'Outros materiais', kind: 'variable' },
   ],
   ambulante: [
-    { name: 'Mercadoria para revenda', kind: 'input' },
+    { name: 'Mercadoria para revenda', kind: 'variable' },
     { name: 'Transporte', kind: 'variable' },
     { name: 'Taxa de ponto / licença', kind: 'fixed' },
   ],
   outro_servico: [
-    { name: 'Materiais usados no atendimento', kind: 'input' },
+    { name: 'Materiais usados no atendimento', kind: 'variable' },
     { name: 'Custo fixo mensal', kind: 'fixed' },
   ],
   outro_produto: [
-    { name: 'Mercadoria / insumo', kind: 'input' },
+    { name: 'Mercadoria / insumo', kind: 'variable' },
     { name: 'Custo fixo mensal', kind: 'fixed' },
   ],
 }
