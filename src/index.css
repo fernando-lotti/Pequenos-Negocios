@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Piscada rápida ao abrir a edição de um lançamento (ver CostEntryForm.tsx
+   e RevenueEntryForm.tsx) — sem isso, a rolagem até o formulário sozinha
+   não deixa claro que ele mudou pra "modo edição". */
+@keyframes flash-highlight {
+  from {
+    background-color: #fee2e2;
+  }
+  to {
+    background-color: white;
+  }
+}
+
+.animate-flash-highlight {
+  animation: flash-highlight 1.2s ease-out;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
