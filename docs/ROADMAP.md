@@ -4,17 +4,17 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 
 ## Fase 0 — Fundação
 - [ ] Repo configurado (branch protection, templates, CI básico)
-- [ ] Setup do projeto (Vite + Supabase conectado, deploy no Vercel funcionando com "hello world")
-- [ ] Autenticação básica (login/cadastro)
-- [ ] Modelo de dados inicial: `businesses`, `cost_categories`, `cost_entries`, `revenue_entries`, todos com RLS de dono único
+- [x] Setup do projeto (Vite + Supabase conectado, deploy no Vercel publicado em [pequenos-negocios.vercel.app](https://pequenos-negocios.vercel.app), atualizando sozinho a cada push na `main` via integração Git do Vercel)
+- [x] Autenticação básica (login/cadastro)
+- [x] Modelo de dados inicial: `businesses`, `cost_categories`, `cost_entries`, `revenue_entries`, todos com RLS de dono único
 
 ## Fase 1 — MVP core
-- [ ] Ficha inicial: escolher tipo de negócio (prestador de serviços / comerciante de produto) e subtipo sugerido
-- [ ] Categorias de custo pré-sugeridas pelo tipo de negócio, mas totalmente editáveis (criar, renomear, desativar)
-- [ ] Seletor de negócio ativo + fluxo de criar um segundo negócio (multi-negócio por usuário)
-- [ ] Cadastro de custos (fixo/variável/insumo) e de receitas diárias
-- [ ] Cálculo do lucro do mês, sempre recalculado ao vivo (editar um lançamento passado atualiza o número automaticamente)
-- [ ] Mecanismo de dica educativa por conceito (mostrada na primeira vez que o conceito aparece), com pelo menos 2 dicas: capital de giro e lucro ≠ caixa
+- [x] Ficha inicial: escolher tipo de negócio (prestador de serviços / comerciante de produto) e subtipo sugerido
+- [x] Categorias de custo pré-sugeridas pelo tipo de negócio, mas totalmente editáveis (criar, renomear, desativar)
+- [x] Seletor de negócio ativo + fluxo de criar um segundo negócio (multi-negócio por usuário)
+- [x] Cadastro de custos (fixo/variável/insumo) e de receitas diárias, com edição de lançamentos já criados
+- [x] Cálculo do lucro do mês, sempre recalculado ao vivo (editar um lançamento passado atualiza o número automaticamente)
+- [x] Mecanismo de dica educativa por conceito (mostrada na primeira vez que o conceito aparece), com pelo menos 2 dicas: capital de giro e lucro ≠ caixa
 
 ## Fase 2 — Polimento e aprofundamento educativo
 - [ ] Mais dicas educativas cobrindo os demais conceitos do glossário (margem, insumo, etc.)
