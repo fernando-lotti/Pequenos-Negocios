@@ -132,3 +132,17 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Modelar retirada como um `cost_entry` de uma categoria especial "Retirada" — rejeitada porque distorceria o lucro do mês (reduziria artificialmente, contradizendo o objetivo #1 do produto de mostrar lucro real); aba própria "Retiradas" no menu inferior, paralela a Custos/Receitas — rejeitada por enquanto porque o menu já tem 5 abas e retirada é uma ação mais esporádica, não diária.
 
 **Consequências:** Se o uso mostrar que retirada é lançada com bastante frequência, vale revisitar e promover pra aba própria no menu inferior.
+
+---
+
+## [2026-08-12] — Custo por produto reaproveita revenue_categories, é relatório adicional (não muda o lucro)
+
+**Contexto:** O time pediu um catálogo de produtos completo (produto com custo, depreciação, Kit de venda numa mesma compra). Isso reabriria uma decisão já tomada (ver ADR "Margem é uma média do mês, não por produto/serviço individual", que rejeitou modelar produto com custo próprio por complexidade). Combinado com o time: construir em fatias pequenas, começando só pela base — custo por unidade — e validar em uso real antes de avançar pra Kit (issue #37) e depreciação (issue #38, adiada deliberadamente por enquanto).
+
+**Decisão:** Em vez de criar uma tabela `products` nova (que duplicaria o que `revenue_categories` já faz — nome + seleção na receita), `revenue_categories` ganhou um campo opcional `unit_cost_cents`. Quando preenchido, essa categoria vira um "produto" com custo conhecido. A tela de Ajustes já muda a copy pra "Produto" em vez de "Categoria de receita" quando o negócio é `product_seller` (`BUSINESS_TYPE_INFO.revenueCategoryLabel`, mesmo padrão de `revenueUnitLabel`), mas o dado por baixo é o mesmo.
+
+`calculateProductMargins` (`revenue/calculations.ts`) é uma função pura que calcula receita, custo (unidades vendidas × custo unitário) e margem por categoria com custo cadastrado, mostrada em `ProductMarginCard.tsx` em Relatórios. **Não entra em `calculateProfitForPeriod`** — é um relatório adicional, assim como a margem média já existente. Essa escolha evita um risco real: quem já lança o custo do insumo manualmente como `cost_entry` (ex: "milho e óleo" como custo variável) contaria o mesmo gasto duas vezes se o custo do produto também fosse descontado do lucro.
+
+**Alternativas consideradas:** Tabela `products` própria, separada de `revenue_categories` — rejeitada por duplicar o que já existe (nome, seleção na receita, exclusão com `on delete set null`) sem ganho claro nesta fatia; descontar o custo do produto do lucro do negócio — rejeitada pelo risco de dupla contagem descrito acima, e por mudar um cálculo central (`profitCents`) que já é bem testado, aumentando o risco da mudança sem necessidade clara agora.
+
+**Consequências:** Quem cadastrar custo por produto E também lançar o mesmo custo como `cost_entry` variável vai ver esse gasto refletido nos dois relatórios (margem por produto E custo variável do negócio) — isso é esperado, são dois relatórios com propósitos diferentes (um por produto, outro agregado), não uma inconsistência. Vale deixar isso claro se surgir dúvida do time.

@@ -2,27 +2,48 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Card } from '../../components/Card'
 import { PrimaryButton } from '../../components/PrimaryButton'
-import { fieldClass } from '../../components/Field'
+import { fieldClass, labelClass } from '../../components/Field'
+import { centsToAmountInputText, formatCurrencyBRL, parseTypedAmountToCents } from '../../lib/currency'
 import type { RevenueCategory } from './types'
+
+interface RevenueCategoryInput {
+  name: string
+  unitCostCents?: number | null
+}
 
 interface RevenueCategoryManagerProps {
   categories: RevenueCategory[]
   // Ids de categoria que já têm pelo menos um lançamento — usado só pra
   // decidir o aviso ao excluir (ver handleDelete).
   usedCategoryIds: Set<string>
-  onCreate: (input: { name: string }) => Promise<unknown>
-  onUpdate: (id: string, input: { name: string }) => Promise<void>
+  onCreate: (input: RevenueCategoryInput) => Promise<unknown>
+  onUpdate: (id: string, input: RevenueCategoryInput) => Promise<void>
   onDelete: (id: string) => Promise<void>
+  // "Produto" pra negócio comerciante de produto, "Categoria de receita"
+  // pra prestador de serviços — mesmo padrão de copy contextual já usado em
+  // BUSINESS_TYPE_INFO (ver businessTypePresets.ts). Não muda nenhum dado,
+  // só como a tela chama a mesma coisa.
+  labelSingular: string
 }
 
 // Gerenciador de categorias de receita: diferente de categoria de custo,
-// não tem "tipo" — é só um rótulo livre pra separar de onde vem o dinheiro
-// (ex: "Pipoca doce", "Pipoca salgada"). O preset inicial (ver
+// não tem "tipo", mas tem um custo por unidade opcional — quando
+// preenchido, vira um "produto" com margem individual calculável (ver
+// reports/ProductMarginCard.tsx). O preset inicial (ver
 // businessTypePresets.ts) é só ponto de partida, totalmente editável.
-export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, onUpdate, onDelete }: RevenueCategoryManagerProps) {
+export function RevenueCategoryManager({
+  categories,
+  usedCategoryIds,
+  onCreate,
+  onUpdate,
+  onDelete,
+  labelSingular,
+}: RevenueCategoryManagerProps) {
   const [newName, setNewName] = useState('')
+  const [newCostText, setNewCostText] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [editingCostText, setEditingCostText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   // Ver comentário equivalente em CostCategoryManager.tsx sobre por que não
   // usamos window.confirm() aqui (PWA instalado ignora confirm() no iOS).
@@ -35,8 +56,9 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
     setIsSubmitting(true)
     setError('')
     try {
-      await onCreate({ name: newName.trim() })
+      await onCreate({ name: newName.trim(), unitCostCents: parseTypedAmountToCents(newCostText) })
       setNewName('')
+      setNewCostText('')
     } catch (createError) {
       console.error('Erro ao criar categoria:', createError)
       setError('Não foi possível criar essa categoria agora. Tente novamente.')
@@ -48,6 +70,7 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
   function startEditing(category: RevenueCategory) {
     setEditingId(category.id)
     setEditingName(category.name)
+    setEditingCostText(category.unitCostCents ? centsToAmountInputText(category.unitCostCents) : '')
     setError('')
   }
 
@@ -59,7 +82,7 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
     if (!editingName.trim()) return
     setError('')
     try {
-      await onUpdate(id, { name: editingName.trim() })
+      await onUpdate(id, { name: editingName.trim(), unitCostCents: parseTypedAmountToCents(editingCostText) })
       setEditingId(null)
     } catch (updateError) {
       console.error('Erro ao editar categoria:', updateError)
@@ -92,7 +115,10 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
 
   return (
     <Card>
-      <p className="font-semibold text-slate-900">Categorias de receita</p>
+      <p className="font-semibold text-slate-900">{labelSingular}s</p>
+      <p className="mt-1 text-sm text-slate-500">
+        Cadastre um custo por unidade pra ver a margem de cada {labelSingular.toLowerCase()} em Relatórios.
+      </p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <ul className="mt-3 flex flex-col gap-2">
@@ -106,6 +132,18 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
                   onChange={(event) => setEditingName(event.target.value)}
                   className={fieldClass}
                 />
+                <div className="flex flex-col gap-1">
+                  <span className={labelClass}>Custo por unidade (opcional)</span>
+                  <input
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    value={editingCostText}
+                    onChange={(event) =>
+                      setEditingCostText(centsToAmountInputText(parseTypedAmountToCents(event.target.value) ?? 0))
+                    }
+                    className={fieldClass}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <PrimaryButton type="button" onClick={() => saveEditing(category.id)} disabled={!editingName.trim()}>
                     Salvar
@@ -142,7 +180,12 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
               key={category.id}
               className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2"
             >
-              <p className="text-sm text-slate-900">{category.name}</p>
+              <p className="text-sm text-slate-900">
+                {category.name}
+                {category.unitCostCents !== null && (
+                  <span className="ml-2 text-xs text-slate-500">custo: {formatCurrencyBRL(category.unitCostCents)}</span>
+                )}
+              </p>
 
               <div className="flex shrink-0 items-center gap-3">
                 <button type="button" onClick={() => startEditing(category)} className="text-xs text-slate-600 underline">
@@ -160,16 +203,27 @@ export function RevenueCategoryManager({ categories, usedCategoryIds, onCreate, 
             </li>
           )
         })}
-        {categories.length === 0 && <p className="text-sm text-slate-500">Nenhuma categoria ainda.</p>}
+        {categories.length === 0 && <p className="text-sm text-slate-500">Nenhum(a) {labelSingular.toLowerCase()} ainda.</p>}
       </ul>
 
       <form onSubmit={handleCreate} className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4">
         <input
           value={newName}
           onChange={(event) => setNewName(event.target.value)}
-          placeholder="Nova categoria (ex: Pipoca doce)"
+          placeholder={`Novo(a) ${labelSingular.toLowerCase()} (ex: Pipoca doce)`}
           className={fieldClass}
         />
+
+        <div className="flex flex-col gap-1">
+          <span className={labelClass}>Custo por unidade (opcional)</span>
+          <input
+            inputMode="numeric"
+            placeholder="R$ 0,00"
+            value={newCostText}
+            onChange={(event) => setNewCostText(centsToAmountInputText(parseTypedAmountToCents(event.target.value) ?? 0))}
+            className={fieldClass}
+          />
+        </div>
 
         <PrimaryButton type="submit" variant="secondary" disabled={isSubmitting || !newName.trim()}>
           Adicionar

@@ -140,18 +140,24 @@ on cost_entries for delete
 using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 -- ----------------------------------------------------------------------------
--- Tabela: revenue_categories ("Categoria de receita", ver GLOSSARY.md)
+-- Tabela: revenue_categories ("Categoria de receita" ou "Produto", ver GLOSSARY.md)
 --
 -- Espelha cost_categories, mas sem "kind" — categoria de receita é só um
 -- rótulo livre pra separar de onde vem o dinheiro (ex: "Pipoca doce",
 -- "Pipoca salgada"), diferente de custo que também precisa saber se é
 -- fixo ou variável. Assim como em cost_categories, o preset inicial (ver
 -- businessTypePresets.ts) é só ponto de partida — totalmente editável.
+--
+-- unit_cost_cents é opcional: quando preenchido, essa categoria vira um
+-- "produto" com custo conhecido, usado pra calcular margem por produto em
+-- Relatórios (ver reports/ProductMarginCard.tsx) — não entra no cálculo de
+-- lucro do negócio, é só um relatório adicional (ver ADR em docs/ARCHITECTURE.md).
 -- ----------------------------------------------------------------------------
 create table if not exists revenue_categories (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses (id) on delete cascade,
   name text not null,
+  unit_cost_cents bigint,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
@@ -383,3 +389,14 @@ using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 create index if not exists idx_withdrawals_business_id on withdrawals (business_id);
 create index if not exists idx_withdrawals_withdrawal_date on withdrawals (business_id, withdrawal_date);
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (issue: custo por unidade em categoria de receita, base pro
+-- catálogo de produtos com margem individual). Adiciona uma coluna opcional
+-- em revenue_categories. Projeto novo, rodando o arquivo inteiro pela
+-- primeira vez, pode ignorar este bloco — a tabela já nasce com essa coluna.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+alter table revenue_categories add column if not exists unit_cost_cents bigint;

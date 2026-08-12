@@ -19,6 +19,7 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 ## Fase 2 — Polimento e aprofundamento educativo
 - [ ] Mais dicas educativas cobrindo os demais conceitos do glossário (margem, insumo, etc.)
 - [x] Cálculo de margem por unidade vendida/atendimento
+- [x] Custo por unidade em categoria de receita ("Produto") + margem por produto em Relatórios
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)
 
@@ -34,3 +35,5 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 - Tabela `business_types` configurável no banco (painel pra editar presets sem precisar de deploy) — só se o número de verticais crescer muito
 - Sincronizar "dicas já vistas" no Supabase (hoje fica em `localStorage`, por dispositivo)
 - Múltiplos usuários com acesso a um mesmo negócio (ex: um funcionário lançando dados)
+- Kit/combo de venda: vender mais de um produto numa mesma receita lançada (issue #37, depende do catálogo de produto acima já estar validado em uso real)
+- Depreciação de equipamento como custo mensal recorrente (issue #38, deliberadamente adiada — ver ADR "Custo por produto é um relatório adicional")

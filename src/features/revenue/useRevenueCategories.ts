@@ -6,6 +6,7 @@ interface RevenueCategoryRow {
   id: string
   business_id: string
   name: string
+  unit_cost_cents: number | null
   is_active: boolean
   created_at: string
 }
@@ -15,6 +16,7 @@ function mapRow(row: RevenueCategoryRow): RevenueCategory {
     id: row.id,
     businessId: row.business_id,
     name: row.name,
+    unitCostCents: row.unit_cost_cents,
     isActive: row.is_active,
     createdAt: row.created_at,
   }
@@ -47,10 +49,10 @@ export function useRevenueCategories(businessId: string) {
     refresh()
   }, [refresh])
 
-  async function createCategory(input: { name: string }): Promise<RevenueCategory> {
+  async function createCategory(input: { name: string; unitCostCents?: number | null }): Promise<RevenueCategory> {
     const { data, error: insertError } = await supabase
       .from('revenue_categories')
-      .insert({ business_id: businessId, name: input.name })
+      .insert({ business_id: businessId, name: input.name, unit_cost_cents: input.unitCostCents ?? null })
       .select()
       .single()
     if (insertError) throw insertError
@@ -59,10 +61,17 @@ export function useRevenueCategories(businessId: string) {
     return category
   }
 
-  async function updateCategory(id: string, input: { name: string }): Promise<void> {
-    const { error: updateError } = await supabase.from('revenue_categories').update({ name: input.name }).eq('id', id)
+  async function updateCategory(id: string, input: { name: string; unitCostCents?: number | null }): Promise<void> {
+    const { error: updateError } = await supabase
+      .from('revenue_categories')
+      .update({ name: input.name, unit_cost_cents: input.unitCostCents ?? null })
+      .eq('id', id)
     if (updateError) throw updateError
-    setCategories((current) => current.map((category) => (category.id === id ? { ...category, name: input.name } : category)))
+    setCategories((current) =>
+      current.map((category) =>
+        category.id === id ? { ...category, name: input.name, unitCostCents: input.unitCostCents ?? null } : category,
+      ),
+    )
   }
 
   // Exclusão de verdade — o banco tem "on delete set null" em

@@ -83,6 +83,7 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
         onCreate={createRevenueCategory}
         onUpdate={updateRevenueCategory}
         onDelete={deleteRevenueCategory}
+        labelSingular={BUSINESS_TYPE_INFO[business.businessType].revenueCategoryLabel}
       />
 
       <Card>

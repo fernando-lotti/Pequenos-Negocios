@@ -2,6 +2,11 @@ export interface RevenueCategory {
   id: string
   businessId: string
   name: string
+  // Custo de produzir/comprar uma unidade — quando preenchido, essa
+  // categoria vira um "produto" com margem individual calculável (ver
+  // reports/ProductMarginCard.tsx). Opcional: nem todo negócio (ou
+  // categoria) precisa disso.
+  unitCostCents: number | null
   isActive: boolean
   createdAt: string
 }
