@@ -23,6 +23,7 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Margem | Diferença entre o preço de venda e o custo variável de uma unidade. Calculada como média do mês: (receita − custos variáveis) ÷ unidades vendidas | (calculado, ver `reports/profit.ts`, campo `marginPerUnitCents`) |
 | Lucro líquido | Receitas do mês menos todos os custos (fixos + variáveis) do mês | (calculado, ver `reports/profit.ts`) |
 | Retirada de caixa | Dinheiro que o dono tira do caixa do negócio pra uso pessoal — reduz o caixa, mas não é custo do negócio, então não entra no cálculo de lucro | `withdrawal` (tabela `withdrawals`) |
+| Ranking de custos | Categorias de custo do período ordenadas da que mais pesa pra que menos pesa, com % do total | (calculado, ver `costs/calculations.ts`, `rankCostsByCategory`) |
 | Dica educativa | Explicação curta de um conceito financeiro, mostrada na primeira vez que ele aparece | `concept_tip` (conteúdo estático, ver `education/tips.ts`) |
 | Conceito | Identificador de um termo financeiro que tem dica educativa associada | `concept_id` (ex: `capital_de_giro`, `custo_fixo`) |
 
