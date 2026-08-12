@@ -19,13 +19,14 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 ## Fase 2 — Polimento e aprofundamento educativo
 - [ ] Mais dicas educativas cobrindo os demais conceitos do glossário (margem, insumo, etc.)
 - [x] Cálculo de margem por unidade vendida/atendimento
+- [x] Regime tributário do negócio em Ajustes (Informal, MEI, Simples Nacional, Lucro Presumido, Lucro Real) — só informativo, prepara terreno pra Fase 3
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)
 
 ## Fase 3 — Expansão
 - [ ] Controle de estoque mais detalhado (quantidade, alerta de reposição)
 - [ ] Contas a pagar/receber (regime de competência, além do regime de caixa simples do MVP)
-- [ ] Calculadora de imposto simplificada (MEI/DAS)
+- [ ] Calculadora de imposto simplificada (MEI/DAS) — pode usar o campo `tax_regime` já existente em `businesses`
 - [ ] Notificações/lembretes (ex: "você ainda não lançou a receita de hoje")
 
 ## Backlog / ideias futuras (não compromissadas)

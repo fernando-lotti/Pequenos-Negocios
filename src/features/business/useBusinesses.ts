@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getCostCategoryPreset, getRevenueCategoryPreset } from './businessTypePresets'
-import type { Business, NewBusinessInput } from './types'
+import type { Business, NewBusinessInput, TaxRegime } from './types'
 
 // Guardamos qual negócio está "ativo" no localStorage — é uma preferência
 // de navegação da pessoa, não um dado do negócio em si, então não precisa
@@ -15,6 +15,7 @@ interface BusinessRow {
   business_type: string
   business_subtype: string | null
   working_capital_goal_cents: number | null
+  tax_regime: string | null
   created_at: string
 }
 
@@ -26,6 +27,7 @@ function mapRowToBusiness(row: BusinessRow): Business {
     businessType: row.business_type as Business['businessType'],
     businessSubtype: row.business_subtype,
     workingCapitalGoalCents: row.working_capital_goal_cents,
+    taxRegime: row.tax_regime as TaxRegime | null,
     createdAt: row.created_at,
   }
 }
@@ -37,6 +39,7 @@ export interface UseBusinessesResult {
   error: string | null
   setActiveBusinessId: (id: string) => void
   createBusiness: (input: NewBusinessInput) => Promise<Business>
+  updateTaxRegime: (businessId: string, taxRegime: TaxRegime | null) => Promise<Business>
   refresh: () => Promise<void>
 }
 
@@ -131,8 +134,31 @@ export function useBusinesses(userId: string | null): UseBusinessesResult {
     return business
   }
 
+  async function updateTaxRegime(businessId: string, taxRegime: TaxRegime | null): Promise<Business> {
+    const { data, error: updateError } = await supabase
+      .from('businesses')
+      .update({ tax_regime: taxRegime })
+      .eq('id', businessId)
+      .select()
+      .single()
+
+    if (updateError) throw updateError
+    const updated = mapRowToBusiness(data as BusinessRow)
+    setBusinesses((current) => current.map((business) => (business.id === businessId ? updated : business)))
+    return updated
+  }
+
   const activeBusiness =
     businesses.find((business) => business.id === activeBusinessId) ?? businesses[0] ?? null
 
-  return { businesses, activeBusiness, isLoading, error, setActiveBusinessId, createBusiness, refresh }
+  return {
+    businesses,
+    activeBusiness,
+    isLoading,
+    error,
+    setActiveBusinessId,
+    createBusiness,
+    updateTaxRegime,
+    refresh,
+  }
 }

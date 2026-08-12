@@ -32,6 +32,12 @@ create table if not exists businesses (
   -- Usada pela dica educativa sobre capital de giro; não entra no cálculo
   -- de lucro/caixa.
   working_capital_goal_cents bigint,
+  -- Regime tributário do negócio — só informativo por enquanto (prepara
+  -- terreno pra calculadora de imposto simplificada da Fase 3, ver
+  -- docs/ROADMAP.md), não afeta nenhum cálculo hoje. Nullable porque é
+  -- opcional: negócio pode não ter CNPJ ainda, ou o dono pode não querer
+  -- informar isso no momento.
+  tax_regime text check (tax_regime in ('informal', 'mei', 'simples_nacional', 'lucro_presumido', 'lucro_real')),
   created_at timestamptz not null default now()
 );
 
@@ -383,3 +389,17 @@ using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 create index if not exists idx_withdrawals_business_id on withdrawals (business_id);
 create index if not exists idx_withdrawals_withdrawal_date on withdrawals (business_id, withdrawal_date);
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (issue: regime tributário do negócio, editável em Ajustes).
+-- Adiciona uma coluna opcional em businesses. Projeto novo, rodando o
+-- arquivo inteiro pela primeira vez, pode ignorar este bloco — a tabela já
+-- nasce com essa coluna.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+alter table businesses add column if not exists tax_regime text;
+alter table businesses drop constraint if exists businesses_tax_regime_check;
+alter table businesses add constraint businesses_tax_regime_check
+  check (tax_regime in ('informal', 'mei', 'simples_nacional', 'lucro_presumido', 'lucro_real'));
