@@ -39,4 +39,9 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
     title: '💡 Retirada não é a mesma coisa que custo',
     body: 'Quando você tira dinheiro do caixa do negócio pra uso pessoal, isso reduz o caixa (quanto dinheiro sobra), mas não é um gasto do negócio — por isso não é descontado do seu lucro. O lucro mostra quanto o negócio gerou; a retirada mostra quanto disso você já tirou pra você.',
   },
+  regime_tributario: {
+    id: 'regime_tributario',
+    title: '💡 O que é regime tributário?',
+    body: 'É a forma como seu negócio paga imposto perante o governo. "Informal" é quem ainda não tem CNPJ. MEI é o regime mais simples pra quem fatura pouco e tem CNPJ próprio. Simples Nacional, Lucro Presumido e Lucro Real são regimes de empresas maiores, com regras diferentes de cálculo de imposto. Por enquanto esse campo é só informativo — no futuro o app pode usar ele pra sugerir uma calculadora de imposto mais precisa.',
+  },
 }

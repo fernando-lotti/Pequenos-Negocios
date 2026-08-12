@@ -132,3 +132,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Modelar retirada como um `cost_entry` de uma categoria especial "Retirada" — rejeitada porque distorceria o lucro do mês (reduziria artificialmente, contradizendo o objetivo #1 do produto de mostrar lucro real); aba própria "Retiradas" no menu inferior, paralela a Custos/Receitas — rejeitada por enquanto porque o menu já tem 5 abas e retirada é uma ação mais esporádica, não diária.
 
 **Consequências:** Se o uso mostrar que retirada é lançada com bastante frequência, vale revisitar e promover pra aba própria no menu inferior.
+
+---
+
+## [2026-08-12] — Regime tributário: enum fixo em businesses, só informativo
+
+**Contexto:** O time queria registrar o regime tributário do negócio, pensando em preparar terreno pra uma futura calculadora de imposto simplificada (Fase 3 do roadmap). Nomenclatura validada com o time antes de mexer no banco: os regimes tributários reais do Brasil são Informal, MEI, Simples Nacional, Lucro Presumido e Lucro Real — "PME" foi descartado por ser classificação de porte, não regime tributário.
+
+**Decisão:** `businesses.tax_regime` é um enum fixo (`'informal' | 'mei' | 'simples_nacional' | 'lucro_presumido' | 'lucro_real'`), nullable, mesmo padrão de `business_type`. Editável em Ajustes (`TaxRegimeField.tsx`), salvando assim que a pessoa troca a opção. **Não afeta nenhum cálculo hoje** — é só armazenado e exibido, com uma dica educativa explicando a diferença entre os regimes (`regime_tributario` em `education/tips.ts`), já que o público do app costuma não conhecer esses termos.
+
+**Alternativas consideradas:** Incluir o campo na ficha inicial (onboarding) — descartado por enquanto pra não alongar um fluxo que já tem várias etapas, sendo que o campo é só informativo e pode ser preenchido depois, com calma, em Ajustes; já esboçar a calculadora de imposto simplificada junto — descartado porque é escopo bem maior (Fase 3), melhor validar o campo isolado primeiro.
+
+**Consequências:** Negócios criados antes dessa mudança ficam com `tax_regime = null` ("não informado") até o dono preencher manualmente — não há preenchimento automático nem obrigatoriedade.

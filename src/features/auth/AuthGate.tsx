@@ -3,7 +3,7 @@ import { AuthScreen } from './AuthScreen'
 import { ResetPasswordScreen } from './ResetPasswordScreen'
 import { useBusinesses } from '../business/useBusinesses'
 import { BusinessOnboarding } from '../business/BusinessOnboarding'
-import type { Business, NewBusinessInput } from '../business/types'
+import type { Business, NewBusinessInput, TaxRegime } from '../business/types'
 import type { User } from '@supabase/supabase-js'
 
 export interface AuthGateContext {
@@ -12,6 +12,7 @@ export interface AuthGateContext {
   activeBusiness: Business
   setActiveBusinessId: (id: string) => void
   createBusiness: (input: NewBusinessInput) => Promise<Business>
+  updateTaxRegime: (businessId: string, taxRegime: TaxRegime | null) => Promise<Business>
 }
 
 interface AuthGateProps {
@@ -31,6 +32,7 @@ export function AuthGate({ children }: AuthGateProps) {
     error,
     setActiveBusinessId,
     createBusiness,
+    updateTaxRegime,
   } = useBusinesses(session?.user.id ?? null)
 
   if (isSessionLoading) {
@@ -67,6 +69,7 @@ export function AuthGate({ children }: AuthGateProps) {
         activeBusiness,
         setActiveBusinessId,
         createBusiness,
+        updateTaxRegime,
       })}
     </>
   )

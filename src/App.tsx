@@ -10,7 +10,14 @@ import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import type { Tab } from './pages/types'
 
-function AuthenticatedApp({ user, businesses, activeBusiness, setActiveBusinessId, createBusiness }: AuthGateContext) {
+function AuthenticatedApp({
+  user,
+  businesses,
+  activeBusiness,
+  setActiveBusinessId,
+  createBusiness,
+  updateTaxRegime,
+}: AuthGateContext) {
   const [activeTab, navigateToTab] = useTabNavigation<Tab>('dashboard')
 
   return (
@@ -35,7 +42,9 @@ function AuthenticatedApp({ user, businesses, activeBusiness, setActiveBusinessI
         <RevenuePage business={activeBusiness} onManageCategories={() => navigateToTab('settings')} />
       )}
       {activeTab === 'reports' && <ReportsPage business={activeBusiness} />}
-      {activeTab === 'settings' && <SettingsPage business={activeBusiness} userEmail={user.email ?? ''} />}
+      {activeTab === 'settings' && (
+        <SettingsPage business={activeBusiness} userEmail={user.email ?? ''} onSaveTaxRegime={updateTaxRegime} />
+      )}
 
       <BottomNav activeTab={activeTab} onNavigate={navigateToTab} />
     </div>
