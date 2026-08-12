@@ -3,6 +3,7 @@ import { Card } from '../components/Card'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
+import { BreakEvenCard } from '../features/reports/BreakEvenCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from '../features/reports/profit'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
@@ -117,6 +118,8 @@ export function ReportsPage({ business }: ReportsPageProps) {
       </div>
 
       <ProfitSummaryCard breakdown={breakdown} />
+
+      <BreakEvenCard breakdown={breakdown} />
 
       <Card>
         <p className="text-sm text-slate-600">Retiradas do período</p>
