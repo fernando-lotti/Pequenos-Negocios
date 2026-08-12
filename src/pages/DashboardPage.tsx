@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
+import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateAccumulatedCash, calculateProfitForPeriod } from '../features/reports/profit'
@@ -10,7 +11,6 @@ import { WithdrawalList } from '../features/withdrawals/WithdrawalList'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
 import { getFirstDayOfCurrentMonthIso, getLastDayOfCurrentMonthIso } from '../lib/date'
 import type { Business } from '../features/business/types'
-import type { CostKind } from '../features/costs/types'
 import type { Withdrawal } from '../features/withdrawals/types'
 
 interface DashboardPageProps {
@@ -18,7 +18,8 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ business }: DashboardPageProps) {
-  const { categories } = useCostCategories(business.id)
+  const { categories: costCategories } = useCostCategories(business.id)
+  const { categories: revenueCategories } = useRevenueCategories(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const {
@@ -30,16 +31,11 @@ export function DashboardPage({ business }: DashboardPageProps) {
   } = useWithdrawals(business.id)
   const [editingWithdrawal, setEditingWithdrawal] = useState<Withdrawal | null>(null)
 
-  const categoryKindById = useMemo(
-    () => new Map<string, CostKind>(categories.map((category) => [category.id, category.kind])),
-    [categories],
-  )
-
   const startDate = getFirstDayOfCurrentMonthIso()
   const endDate = getLastDayOfCurrentMonthIso()
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
+    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories),
+    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories],
   )
   const cashCents = useMemo(
     () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals),
