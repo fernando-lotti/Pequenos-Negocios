@@ -5,6 +5,13 @@ export const COST_KIND_LABELS: Record<CostKind, string> = {
   variable: 'Custo variável',
 }
 
+// Liga cada tipo de custo ao id da dica educativa correspondente (ver
+// education/tips.ts) — usado pelo ícone "i" no seletor de tipo.
+export const COST_KIND_CONCEPT_IDS: Record<CostKind, string> = {
+  fixed: 'custo_fixo',
+  variable: 'custo_variavel',
+}
+
 export interface CostCategory {
   id: string
   businessId: string

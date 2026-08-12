@@ -2,9 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Card } from '../../components/Card'
 import { PrimaryButton } from '../../components/PrimaryButton'
-import { fieldClass } from '../../components/Field'
+import { fieldClass, labelClass } from '../../components/Field'
 import { InfoTooltip } from '../education/InfoTooltip'
-import { COST_KIND_LABELS } from './types'
+import { COST_KIND_CONCEPT_IDS, COST_KIND_LABELS } from './types'
 import type { CostCategory, CostKind } from './types'
 
 interface CostCategoryManagerProps {
@@ -64,17 +64,6 @@ export function CostCategoryManager({ categories, onCreate, onRename, onSetActiv
         </button>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          Custo fixo
-          <InfoTooltip conceptId="custo_fixo" />
-        </span>
-        <span className="inline-flex items-center gap-1">
-          Custo variável
-          <InfoTooltip conceptId="custo_variavel" />
-        </span>
-      </div>
-
       <ul className="mt-3 flex flex-col gap-2">
         {visibleCategories.map((category) => (
           <li
@@ -113,20 +102,33 @@ export function CostCategoryManager({ categories, onCreate, onRename, onSetActiv
         {visibleCategories.length === 0 && <p className="text-sm text-slate-500">Nenhuma categoria ainda.</p>}
       </ul>
 
-      <form onSubmit={handleCreate} className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row">
+      <form onSubmit={handleCreate} className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4">
         <input
           value={newName}
           onChange={(event) => setNewName(event.target.value)}
           placeholder="Nova categoria (ex: Aluguel)"
           className={fieldClass}
         />
-        <select value={newKind} onChange={(event) => setNewKind(event.target.value as CostKind)} className={fieldClass}>
-          {(Object.keys(COST_KIND_LABELS) as CostKind[]).map((kind) => (
-            <option key={kind} value={kind}>
-              {COST_KIND_LABELS[kind]}
-            </option>
-          ))}
-        </select>
+
+        <div className="flex flex-col gap-1">
+          <span className={labelClass}>Tipo de custo</span>
+          <div className="flex gap-2">
+            {(Object.keys(COST_KIND_LABELS) as CostKind[]).map((kind) => (
+              <div
+                key={kind}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm ${
+                  newKind === kind ? 'border-emerald-600 bg-emerald-50 text-emerald-900' : 'border-slate-300 text-slate-700'
+                }`}
+              >
+                <button type="button" onClick={() => setNewKind(kind)} className="flex-1 text-center">
+                  {COST_KIND_LABELS[kind]}
+                </button>
+                <InfoTooltip conceptId={COST_KIND_CONCEPT_IDS[kind]} />
+              </div>
+            ))}
+          </div>
+        </div>
+
         <PrimaryButton type="submit" variant="secondary" disabled={isSubmitting || !newName.trim()}>
           Adicionar
         </PrimaryButton>
