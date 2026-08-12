@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateAccumulatedCash, calculateMonthlyProfit } from './profit'
+import { calculateAccumulatedCash, calculateProfitForPeriod, getEarliestEntryDate } from './profit'
 import type { CostEntry, CostKind } from '../costs/types'
 import type { RevenueEntry } from '../revenue/types'
 
@@ -37,15 +37,15 @@ const categoryKindById = new Map<string, CostKind>([
   ['category-variable', 'variable'],
 ])
 
-describe('calculateMonthlyProfit', () => {
-  it('calcula lucro = receitas menos custos fixos e variáveis do mês', () => {
+describe('calculateProfitForPeriod', () => {
+  it('calcula lucro = receitas menos custos fixos e variáveis do período', () => {
     const costEntries = [
       makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 }),
       makeCostEntry({ costCategoryId: 'category-variable', amountCents: 500 }),
     ]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
-    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
 
     expect(result.revenueCents).toBe(5000)
     expect(result.fixedCostCents).toBe(1000)
@@ -54,15 +54,43 @@ describe('calculateMonthlyProfit', () => {
     expect(result.profitCents).toBe(3500)
   })
 
-  it('ignora lançamentos de outros meses', () => {
+  it('ignora lançamentos fora do período', () => {
     const costEntries = [makeCostEntry({ costDate: '2026-07-20', amountCents: 9999 })]
     const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-07-20', amountCents: 9999 })]
 
-    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
 
     expect(result.revenueCents).toBe(0)
     expect(result.totalCostCents).toBe(0)
     expect(result.profitCents).toBe(0)
+  })
+
+  it('aceita um período que cruza vários meses', () => {
+    const costEntries = [
+      makeCostEntry({ costDate: '2026-07-15', costCategoryId: 'category-fixed', amountCents: 1000 }),
+      makeCostEntry({ costDate: '2026-08-20', costCategoryId: 'category-variable', amountCents: 500 }),
+      makeCostEntry({ costDate: '2026-09-01', costCategoryId: 'category-fixed', amountCents: 9999 }),
+    ]
+    const revenueEntries = [
+      makeRevenueEntry({ revenueDate: '2026-07-10', amountCents: 3000 }),
+      makeRevenueEntry({ revenueDate: '2026-08-25', amountCents: 4000 }),
+    ]
+
+    const result = calculateProfitForPeriod('2026-07-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+
+    expect(result.revenueCents).toBe(7000)
+    expect(result.totalCostCents).toBe(1500)
+    expect(result.profitCents).toBe(5500)
+  })
+
+  it('inclui lançamentos exatamente na data de início e na de fim do período', () => {
+    const costEntries = [makeCostEntry({ costDate: '2026-08-01', amountCents: 100 })]
+    const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-08-31', amountCents: 200 })]
+
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+
+    expect(result.totalCostCents).toBe(100)
+    expect(result.revenueCents).toBe(200)
   })
 
   it('conta lançamentos com categoria excluída como "sem categoria", sem sumir do total', () => {
@@ -72,7 +100,7 @@ describe('calculateMonthlyProfit', () => {
     ]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
-    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
 
     expect(result.fixedCostCents).toBe(1000)
     expect(result.uncategorizedCostCents).toBe(300)
@@ -84,7 +112,7 @@ describe('calculateMonthlyProfit', () => {
     const costEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 10000 })]
     const revenueEntries = [makeRevenueEntry({ amountCents: 2000 })]
 
-    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
 
     expect(result.profitCents).toBe(-8000)
   })
@@ -93,13 +121,13 @@ describe('calculateMonthlyProfit', () => {
     const costEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 })]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
-    const before = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+    const before = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
     expect(before.profitCents).toBe(4000)
 
-    // Simula edição de um lançamento de um mês "passado" — a mesma função,
-    // sem nenhum estado extra, já reflete o novo valor.
+    // Simula edição de um lançamento de um período "passado" — a mesma
+    // função, sem nenhum estado extra, já reflete o novo valor.
     const editedCostEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 4000 })]
-    const after = calculateMonthlyProfit('2026-08', editedCostEntries, revenueEntries, categoryKindById)
+    const after = calculateProfitForPeriod('2026-08-01', '2026-08-31', editedCostEntries, revenueEntries, categoryKindById)
     expect(after.profitCents).toBe(1000)
   })
 
@@ -113,7 +141,7 @@ describe('calculateMonthlyProfit', () => {
       makeRevenueEntry({ amountCents: 7000, unitsSold: 20 }),
     ]
 
-    const result = calculateMonthlyProfit('2026-08', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
 
     expect(result.unitsSoldTotal).toBe(30)
     // (10000 receita - 2000 custo variável) / 30 unidades = 266,67 -> arredonda pra 267
@@ -126,19 +154,32 @@ describe('calculateMonthlyProfit', () => {
       makeRevenueEntry({ amountCents: 7000, unitsSold: 20 }),
     ]
 
-    const result = calculateMonthlyProfit('2026-08', [], revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, categoryKindById)
 
     expect(result.unitsSoldTotal).toBe(20)
     expect(result.marginPerUnitCents).toBe(500)
   })
 
-  it('devolve margem null quando nenhuma receita do mês tem unidades vendidas', () => {
+  it('devolve margem null quando nenhuma receita do período tem unidades vendidas', () => {
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000, unitsSold: null })]
 
-    const result = calculateMonthlyProfit('2026-08', [], revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, categoryKindById)
 
     expect(result.unitsSoldTotal).toBe(0)
     expect(result.marginPerUnitCents).toBeNull()
+  })
+})
+
+describe('getEarliestEntryDate', () => {
+  it('devolve a data mais antiga entre custos e receitas', () => {
+    const costEntries = [makeCostEntry({ costDate: '2026-06-10' })]
+    const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-05-01' }), makeRevenueEntry({ revenueDate: '2026-07-01' })]
+
+    expect(getEarliestEntryDate(costEntries, revenueEntries)).toBe('2026-05-01')
+  })
+
+  it('devolve null quando não há nenhum lançamento', () => {
+    expect(getEarliestEntryDate([], [])).toBeNull()
   })
 })
 
