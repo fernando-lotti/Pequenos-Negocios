@@ -19,7 +19,7 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Registro diário de receita | Lançamento de receita do dia (valor, unidades opcional) | `revenue_entry` (tabela `revenue_entries`) |
 | Caixa | Saldo calculado (receitas menos custos), nunca armazenado numa tabela própria | (calculado, ver `reports/profit.ts`) |
 | Capital de giro | Reserva de dinheiro pra cobrir custos até a próxima entrada de receita | `working_capital_goal_cents` (campo opcional em `businesses`) |
-| Margem | Diferença entre o preço de venda e o custo variável de uma unidade | (calculado, Fase 2) |
+| Margem | Diferença entre o preço de venda e o custo variável de uma unidade. Calculada como média do mês: (receita − custos variáveis) ÷ unidades vendidas | (calculado, ver `reports/profit.ts`, campo `marginPerUnitCents`) |
 | Lucro líquido | Receitas do mês menos todos os custos (fixos + variáveis) do mês | (calculado, ver `reports/profit.ts`) |
 | Dica educativa | Explicação curta de um conceito financeiro, mostrada na primeira vez que ele aparece | `concept_tip` (conteúdo estático, ver `education/tips.ts`) |
 | Conceito | Identificador de um termo financeiro que tem dica educativa associada | `concept_id` (ex: `capital_de_giro`, `custo_fixo`) |

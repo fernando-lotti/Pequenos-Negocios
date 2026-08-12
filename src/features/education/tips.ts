@@ -29,4 +29,9 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
     title: '💡 O que é custo variável?',
     body: 'É o gasto que muda de acordo com o quanto você vende ou trabalha — quanto mais você vende, mais desse custo você tem. Exemplos: combustível de mais corridas, embalagens de mais vendas, ou o insumo consumido em cada venda/atendimento (milho e óleo de uma pipoca, produto usado numa maquiagem).',
   },
+  margem: {
+    id: 'margem',
+    title: '💡 O que é margem?',
+    body: 'É quanto sobra de cada venda ou atendimento depois de descontar só o custo variável dela (o insumo, por exemplo) — sem contar os custos fixos do mês, como aluguel. Aqui mostramos a margem média: pegamos a receita do mês menos os custos variáveis do mês, e dividimos pela quantidade vendida. Por isso ela só aparece se você preencher "Quantidade" ao lançar suas receitas.',
+  },
 }
