@@ -19,7 +19,7 @@ function AuthenticatedApp({
   createBusiness,
   updateMonthlyGoal,
 }: AuthGateContext) {
-  const [activeTab, navigateToTab] = useTabNavigation<Tab>('dashboard')
+  const [activeTab, navigateToTab, goBack] = useTabNavigation<Tab>('dashboard')
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -68,7 +68,7 @@ function AuthenticatedApp({
           onOpenGlossary={() => navigateToTab('glossary')}
         />
       )}
-      {activeTab === 'glossary' && <GlossaryPage onBack={() => navigateToTab('dashboard')} />}
+      {activeTab === 'glossary' && <GlossaryPage onBack={goBack} />}
 
       <BottomNav activeTab={activeTab} onNavigate={navigateToTab} />
     </div>

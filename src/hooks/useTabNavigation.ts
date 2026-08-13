@@ -30,5 +30,13 @@ export function useTabNavigation<Tab extends string>(initialTab: Tab) {
     setActiveTab(tab)
   }
 
-  return [activeTab, navigateToTab] as const
+  // Pra telas alcançadas só por um link (ex: Glossário), em vez de um botão
+  // fixo na navegação — usa o histórico de verdade do navegador, assim
+  // "Voltar" sempre leva pra aba de onde a pessoa veio (Início, Ajustes...),
+  // e não pra uma aba fixa que ignoraria de onde ela entrou.
+  function goBack() {
+    window.history.back()
+  }
+
+  return [activeTab, navigateToTab, goBack] as const
 }
