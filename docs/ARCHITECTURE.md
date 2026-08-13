@@ -135,6 +135,30 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 
 ---
 
+## [2026-08-12] — Meta mensal: lucro ou faturamento, campo simples em `businesses`
+
+**Contexto:** O time queria uma forma de acompanhar progresso rumo a um objetivo do mês, mas lucro e faturamento (receita bruta) são números bem diferentes — nem todo negócio quer acompanhar o mesmo.
+
+**Decisão:** Duas colunas opcionais em `businesses` — `monthly_goal_cents` e `monthly_goal_type` (`'profit' | 'revenue'`) — em vez de uma tabela própria de "metas". O dono escolhe o tipo ao definir a meta em Ajustes (`MonthlyGoalForm.tsx`); o Dashboard mostra uma barra de progresso comparando o lucro ou faturamento do **mês atual** (sempre recalculado ao vivo, igual todo o resto do produto) contra essa meta (`MonthlyGoalCard.tsx`, `reports/goalProgress.ts`). Mesmo padrão já usado pra `working_capital_goal_cents`: meta é sempre um valor único (não há histórico de metas passadas).
+
+**Alternativas consideradas:** Tabela própria `monthly_goals` com uma linha por mês/negócio, permitindo metas diferentes a cada mês e um histórico — rejeitada por enquanto por adicionar complexidade (mais uma tabela, mais RLS) sem uma necessidade clara ainda; forçar só meta de lucro (sem escolha de tipo) — rejeitada porque faturamento é mais fácil de entender pra quem está começando, e lucro é mais alinhado ao objetivo #1 do produto, então faz sentido deixar a pessoa escolher.
+
+**Consequências:** A meta é sempre "a atual" — trocar o valor no meio do mês substitui a meta anterior, sem guardar o que era antes. Se o produto evoluir pra precisar de metas por mês específico (ex: comparar metas de meses diferentes num relatório), isso vira uma tabela própria depois.
+
+---
+
+## [2026-08-12] — Calculadora de preço de venda usa margem em R$, não em porcentagem
+
+**Contexto:** Precisávamos de uma calculadora simples pra ajudar o dono a decidir por quanto vender algo, mas o app já tem um significado estabelecido pra "margem" (valor em R$ que sobra por unidade, ver `reports/profit.ts` e `GLOSSARY.md`) — diferente do "markup"/margem percentual comum em outras ferramentas.
+
+**Decisão:** A calculadora (`features/pricing/`) pede custo da unidade e margem desejada, os dois em R$, e soma os dois pra sugerir o preço (`calculateSuggestedPrice`). Não persiste nada no banco — é só uma ferramenta de apoio, sem lançamento nem histórico. Mostra a porcentagem que a margem representa do preço final como informação extra (não como campo de entrada), pra não misturar dois jeitos de pensar em margem na mesma tela.
+
+**Alternativas consideradas:** Pedir a margem como porcentagem do preço de venda (comum em outras ferramentas, ex: "quero 30% de margem") — rejeitada porque criaria um segundo significado de "margem" dentro do mesmo app, o que é confuso justamente pro público que o produto quer educar.
+
+**Consequências:** Quem já está acostumado a pensar em margem como porcentagem precisa converter mentalmente pra R$ antes de usar a calculadora — aceitável porque a tela já mostra a porcentagem equivalente depois do cálculo, e mantém consistência com o resto do app.
+
+---
+
 ## [2026-08-12] — Ponto de equilíbrio reaproveita fixedCostCents e marginPerUnitCents, sem novo dado
 
 **Contexto:** Queríamos mostrar quantas vendas/atendimentos faltam pra cobrir os custos fixos do período (issue #21), mas o produto já calcula tudo que é preciso pra isso: `fixedCostCents` e `marginPerUnitCents` (`reports/profit.ts`).
