@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { Card } from '../../components/Card'
 import { ConceptTip } from '../education/ConceptTip'
+import { GlossaryTerm } from '../education/GlossaryTerm'
 import { formatCurrencyBRL } from '../../lib/currency'
 import { formatDateRangeLabel } from '../../lib/date'
 import type { ProfitBreakdown } from './profit'
@@ -28,7 +29,8 @@ export function ProfitSummaryCard({ breakdown }: ProfitSummaryCardProps) {
   return (
     <Card>
       <p className="text-sm text-slate-600">
-        Lucro líquido de {formatDateRangeLabel(breakdown.startDate, breakdown.endDate)}
+        <GlossaryTerm conceptId="lucro_caixa">Lucro líquido</GlossaryTerm> de{' '}
+        {formatDateRangeLabel(breakdown.startDate, breakdown.endDate)}
       </p>
       <p className={`mt-1 text-3xl font-bold ${isProfit ? 'text-emerald-700' : 'text-red-600'}`}>
         {formatCurrencyBRL(breakdown.profitCents)}
@@ -63,10 +65,14 @@ export function ProfitSummaryCard({ breakdown }: ProfitSummaryCardProps) {
       <dl className="mt-2 grid grid-cols-2 gap-y-2 text-sm">
         {costView === 'tipo' ? (
           <>
-            <dt className="text-slate-500">Custos fixos</dt>
+            <dt className="text-slate-500">
+              <GlossaryTerm conceptId="custo_fixo">Custos fixos</GlossaryTerm>
+            </dt>
             <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.fixedCostCents)}</dd>
 
-            <dt className="text-slate-500">Custos variáveis</dt>
+            <dt className="text-slate-500">
+              <GlossaryTerm conceptId="custo_variavel">Custos variáveis</GlossaryTerm>
+            </dt>
             <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.variableCostCents)}</dd>
 
             {breakdown.uncategorizedCostCents > 0 && (
@@ -91,7 +97,9 @@ export function ProfitSummaryCard({ breakdown }: ProfitSummaryCardProps) {
 
         {breakdown.cardFeeCents > 0 && (
           <>
-            <dt className="text-slate-500">Taxas de pagamento</dt>
+            <dt className="text-slate-500">
+              <GlossaryTerm conceptId="taxa_de_pagamento">Taxas de pagamento</GlossaryTerm>
+            </dt>
             <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.cardFeeCents)}</dd>
           </>
         )}
@@ -115,7 +123,9 @@ export function ProfitSummaryCard({ breakdown }: ProfitSummaryCardProps) {
       )}
 
       <div className="mt-4 border-t border-slate-100 pt-4">
-        <p className="text-sm text-slate-500">Margem média por unidade vendida</p>
+        <p className="text-sm text-slate-500">
+          <GlossaryTerm conceptId="margem">Margem</GlossaryTerm> média por unidade vendida
+        </p>
         {breakdown.marginPerUnitCents !== null ? (
           <p className="mt-1 text-xl font-semibold text-slate-900">{formatCurrencyBRL(breakdown.marginPerUnitCents)}</p>
         ) : (

@@ -1,5 +1,6 @@
 import { Card } from '../../components/Card'
 import { CollapsibleText } from '../../components/CollapsibleText'
+import { GlossaryTerm } from '../education/GlossaryTerm'
 import { formatCurrencyBRL } from '../../lib/currency'
 import { formatIsoDateAsBR } from '../../lib/date'
 import type { Withdrawal } from './types'
@@ -13,7 +14,9 @@ interface WithdrawalListProps {
 export function WithdrawalList({ withdrawals, onEdit, onDelete }: WithdrawalListProps) {
   return (
     <Card>
-      <p className="font-semibold text-slate-900">Retiradas lançadas</p>
+      <p className="font-semibold text-slate-900">
+        <GlossaryTerm conceptId="retirada_de_caixa">Retiradas</GlossaryTerm> lançadas
+      </p>
 
       {withdrawals.length === 0 ? (
         <p className="mt-2 text-sm text-slate-500">Nenhuma retirada lançada ainda.</p>

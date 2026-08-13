@@ -1,4 +1,5 @@
 import { Card } from '../../components/Card'
+import { GlossaryTerm } from '../education/GlossaryTerm'
 import { formatCurrencyBRL } from '../../lib/currency'
 
 interface DailyCashSummaryProps {
@@ -11,7 +12,9 @@ interface DailyCashSummaryProps {
 export function DailyCashSummary({ cashCents }: DailyCashSummaryProps) {
   return (
     <Card className="border-emerald-200 bg-emerald-50">
-      <p className="text-sm text-emerald-800">Caixa (receitas − custos, sempre atualizado)</p>
+      <p className="text-sm text-emerald-800">
+        <GlossaryTerm conceptId="lucro_caixa">Caixa</GlossaryTerm> (receitas − custos, sempre atualizado)
+      </p>
       <p className="mt-1 text-2xl font-bold text-emerald-900">{formatCurrencyBRL(cashCents)}</p>
     </Card>
   )

@@ -18,6 +18,7 @@ interface SettingsPageProps {
   business: Business
   userEmail: string
   onSaveMonthlyGoal: (businessId: string, goal: MonthlyGoalInput | null) => Promise<unknown>
+  onOpenGlossary: () => void
 }
 
 // O cadastro de categorias (de custo e de receita) mora aqui, em vez de
@@ -25,7 +26,7 @@ interface SettingsPageProps {
 // do negócio, não do dia a dia de lançar valores — os formulários de
 // lançamento levam pra cá através da opção "+ Nova categoria" (ver
 // CostEntryForm.tsx e RevenueEntryForm.tsx).
-export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: SettingsPageProps) {
+export function SettingsPage({ business, userEmail, onSaveMonthlyGoal, onOpenGlossary }: SettingsPageProps) {
   const {
     categories: costCategories,
     isLoading: isLoadingCostCategories,
@@ -87,6 +88,18 @@ export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: Setting
         <p className="mt-2 text-xs text-slate-500">
           Pra adicionar outro negócio, use o botão "+ Novo negócio" no topo da tela.
         </p>
+      </Card>
+
+      <Card>
+        <button type="button" onClick={onOpenGlossary} className="flex w-full items-center justify-between text-left">
+          <span>
+            <p className="font-semibold text-slate-900">📖 Glossário de termos</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Consulte o significado de margem, custo fixo, capital de giro e outros termos usados no app.
+            </p>
+          </span>
+          <span className="text-slate-400">›</span>
+        </button>
       </Card>
 
       <MonthlyGoalForm business={business} onSave={onSaveMonthlyGoal} />
