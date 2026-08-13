@@ -5,10 +5,12 @@ import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
 import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
+import { ProductMarginCard } from '../features/reports/ProductMarginCard'
 import { CostRankingCard } from '../features/reports/CostRankingCard'
 import { BreakEvenCard } from '../features/reports/BreakEvenCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from '../features/reports/profit'
+import { calculateProductMargins } from '../features/revenue/calculations'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
@@ -60,6 +62,15 @@ export function ReportsPage({ business }: ReportsPageProps) {
     () => calculateWithdrawalsForPeriod(startDate, endDate, withdrawals),
     [startDate, endDate, withdrawals],
   )
+
+  // Mesma janela inclusiva de datas usada em calculateProfitForPeriod — ver
+  // reports/profit.ts.
+  const productMargins = useMemo(() => {
+    const periodRevenueEntries = revenueEntries.filter(
+      (entry) => entry.revenueDate >= startDate && entry.revenueDate <= endDate,
+    )
+    return calculateProductMargins(periodRevenueEntries, revenueCategories)
+  }, [revenueEntries, revenueCategories, startDate, endDate])
 
   // Mesma janela inclusiva de datas usada em calculateProfitForPeriod —
   // ver reports/profit.ts.
@@ -146,6 +157,8 @@ export function ReportsPage({ business }: ReportsPageProps) {
       <PriceCalculator />
 
       <CostRankingCard ranking={costRanking} />
+
+      <ProductMarginCard margins={productMargins} />
 
       <Card>
         <p className="text-sm text-slate-600">Retiradas do período</p>

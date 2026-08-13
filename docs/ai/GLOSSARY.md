@@ -16,7 +16,8 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Lançamento de custo | Um registro de gasto numa categoria, numa data | `cost_entry` (tabela `cost_entries`) |
 | Lançamento sem categoria | Lançamento de custo cuja categoria foi excluída — continua contando no lucro do mês, mas fora do detalhamento fixo/variável, até ser reclassificado | `cost_category_id = null` |
 | Receita | Dinheiro recebido por uma venda/atendimento | `revenue` |
-| Categoria de receita | Rótulo livre pra separar de onde vem a receita (ex: "Pipoca doce", "Pipoca salgada") — diferente de categoria de custo, não tem "tipo" | `revenue_category` (tabela `revenue_categories`) |
+| Categoria de receita / Produto | Rótulo livre pra separar de onde vem a receita (ex: "Pipoca doce", "Pipoca salgada") — chamado de "Produto" na tela pra negócio comerciante de produto. Pode ter um custo por unidade cadastrado (opcional) | `revenue_category` (tabela `revenue_categories`, campo `unit_cost_cents`) |
+| Margem por produto | Receita, custo e margem individual de um produto no período (receita − unidades vendidas × custo por unidade) — só pra produtos com custo cadastrado, não afeta o lucro do negócio | (calculado, ver `revenue/calculations.ts`, `calculateProductMargins`) |
 | Registro diário de receita | Lançamento de receita do dia (valor, unidades opcional, categoria opcional) | `revenue_entry` (tabela `revenue_entries`) |
 | Caixa | Saldo calculado (receitas menos custos), nunca armazenado numa tabela própria | (calculado, ver `reports/profit.ts`) |
 | Capital de giro | Reserva de dinheiro pra cobrir custos até a próxima entrada de receita | `working_capital_goal_cents` (campo opcional em `businesses`) |

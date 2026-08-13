@@ -23,6 +23,9 @@ interface RevenueEntryFormProps {
   // Leva pra aba Ajustes, onde agora fica o cadastro de categorias de
   // receita (ver SettingsPage.tsx) — usado pela opção "+ Nova categoria".
   onManageCategories: () => void
+  // "Produto" pra negócio comerciante de produto, "Categoria" pra
+  // prestador de serviços — ver BUSINESS_TYPE_INFO.revenueCategoryLabel.
+  categoryLabelSingular: string
   // Mesma ideia, pro cadastro de formas de pagamento (ver PaymentMethodManager.tsx).
   onManagePaymentMethods: () => void
 }
@@ -34,6 +37,7 @@ export function RevenueEntryForm({
   entryToEdit,
   onCancelEdit,
   onManageCategories,
+  categoryLabelSingular,
   onManagePaymentMethods,
 }: RevenueEntryFormProps) {
   // Diferente de categoria de custo, categoria de receita é opcional — nem
@@ -100,7 +104,7 @@ export function RevenueEntryForm({
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="revenue-category" className={labelClass}>
-            Categoria (opcional)
+            {categoryLabelSingular} (opcional)
           </label>
           {categories.length > 0 ? (
             <select
@@ -115,13 +119,13 @@ export function RevenueEntryForm({
               }}
               className={fieldClass}
             >
-              <option value="">Sem categoria</option>
+              <option value="">Sem {categoryLabelSingular.toLowerCase()}</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
               ))}
-              <option value={NEW_CATEGORY_OPTION_VALUE}>+ Nova categoria</option>
+              <option value={NEW_CATEGORY_OPTION_VALUE}>+ Novo(a) {categoryLabelSingular.toLowerCase()}</option>
             </select>
           ) : (
             <button
@@ -129,7 +133,7 @@ export function RevenueEntryForm({
               onClick={onManageCategories}
               className="rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-emerald-700"
             >
-              + Cadastrar categoria de receita
+              + Cadastrar {categoryLabelSingular.toLowerCase()}
             </button>
           )}
         </div>

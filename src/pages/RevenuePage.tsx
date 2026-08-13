@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BUSINESS_TYPE_INFO } from '../features/business/businessTypePresets'
 import { RevenueEntryForm } from '../features/revenue/RevenueEntryForm'
 import { RevenueEntryList } from '../features/revenue/RevenueEntryList'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
@@ -35,6 +36,7 @@ export function RevenuePage({ business, onManageCategories }: RevenuePageProps) 
         onCancelEdit={() => setEditingEntry(null)}
         onSubmit={(input) => (editingEntry ? updateEntry(editingEntry.id, input) : createEntry(input))}
         onManageCategories={onManageCategories}
+        categoryLabelSingular={BUSINESS_TYPE_INFO[business.businessType].revenueCategoryLabel}
         onManagePaymentMethods={onManageCategories}
       />
       <RevenueEntryList

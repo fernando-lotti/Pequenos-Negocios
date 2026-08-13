@@ -12,6 +12,10 @@ export interface BusinessTypeInfo {
   // Como chamar uma "venda"/"atendimento" nas telas de receita, de acordo
   // com o tipo de negócio.
   revenueUnitLabel: string
+  // Como chamar uma "categoria de receita" na tela de Ajustes — "Produto"
+  // pra quem vende produto (ver RevenueCategoryManager.tsx), já que ali o
+  // custo por unidade faz mais sentido conceitualmente.
+  revenueCategoryLabel: string
 }
 
 export const BUSINESS_TYPE_INFO: Record<BusinessType, BusinessTypeInfo> = {
@@ -19,6 +23,7 @@ export const BUSINESS_TYPE_INFO: Record<BusinessType, BusinessTypeInfo> = {
     title: 'Prestador de serviços',
     description: 'Você cobra por atendimento, corrida ou hora — ex: motorista de app, maquiadora, cabeleireiro.',
     revenueUnitLabel: 'atendimento',
+    revenueCategoryLabel: 'Categoria de receita',
   },
   product_seller: {
     title: 'Comerciante de produto',
@@ -28,6 +33,7 @@ export const BUSINESS_TYPE_INFO: Record<BusinessType, BusinessTypeInfo> = {
     // pluralizado viraria "unidade vendidas" (só o segundo substantivo no
     // plural, gramaticalmente errado).
     revenueUnitLabel: 'unidade',
+    revenueCategoryLabel: 'Produto',
   },
 }
 

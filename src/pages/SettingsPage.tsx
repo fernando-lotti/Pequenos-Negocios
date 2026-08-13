@@ -105,6 +105,7 @@ export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: Setting
         onCreate={createRevenueCategory}
         onUpdate={updateRevenueCategory}
         onDelete={deleteRevenueCategory}
+        labelSingular={BUSINESS_TYPE_INFO[business.businessType].revenueCategoryLabel}
       />
 
       <PaymentMethodManager
