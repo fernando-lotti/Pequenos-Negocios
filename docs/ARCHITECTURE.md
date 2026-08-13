@@ -192,3 +192,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Fazer `rankCostsByCategory` receber `startDate`/`endDate` e filtrar internamente — rejeitado porque duplicaria a regra de filtro de data que já vive implicitamente em `profit.ts`, e misturaria duas responsabilidades (agrupar por categoria + filtrar por data) na mesma função.
 
 **Consequências:** Nenhuma — é aditivo, não muda nenhum cálculo existente. `totalsByCategory` continua exportada e usável isoladamente (hoje só usada internamente por `rankCostsByCategory`).
+
+---
+
+## [2026-08-12] — Alertas de saúde financeira: regras fixas em código, sem tabela de configuração
+
+**Contexto:** Queríamos transformar números que o app já mostra em avisos ativos (issue #24), sem virar um sistema de notificação nem um "score financeiro" complexo.
+
+**Decisão:** `calculateFinancialAlerts` (`reports/financialAlerts.ts`) recebe os números já calculados (custo fixo, receita, caixa, meta de capital de giro) e devolve uma lista de alertas com base em duas regras fixas no código: custo fixo consumindo mais de 50% da receita do período, e caixa abaixo da meta de capital de giro (quando definida). `FinancialAlertsCard.tsx`, no Dashboard, só renderiza algo quando a lista não está vazia — sem alerta ativo, o card nem entra no DOM. Os limiares (ex: 50%) são constantes no código, não configuráveis pelo usuário nesta primeira versão.
+
+**Consequências:** O alerta de "caixa abaixo da meta" depende de `working_capital_goal_cents`, que existe no banco desde o início mas **não tem nenhuma tela pra editar** — hoje é sempre `null` na prática, então esse alerta específico não dispara pra ninguém ainda. Registrado como pendência no backlog (`docs/ROADMAP.md`); não resolvido nesta issue pra não misturar duas mudanças de escopos diferentes no mesmo PR. O limiar de 50% pro custo fixo é um valor de referência do time, não uma regra contábil — pode precisar de ajuste depois de observar uso real.
+
+**Alternativas consideradas:** Tornar os limiares configuráveis por negócio (ex: "me avise quando custo fixo passar de X%") — rejeitado por ora por adicionar mais um formulário de configuração sem validação de que o valor fixo de 50% já não é suficiente.

@@ -3,6 +3,8 @@ import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
+import { calculateFinancialAlerts } from '../features/reports/financialAlerts'
+import { FinancialAlertsCard } from '../features/reports/FinancialAlertsCard'
 import { MonthEndProjectionCard } from '../features/reports/MonthEndProjectionCard'
 import { MonthlyGoalCard } from '../features/reports/MonthlyGoalCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
@@ -52,6 +54,16 @@ export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
     () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals),
     [costEntries, revenueEntries, withdrawals],
   )
+  const financialAlerts = useMemo(
+    () =>
+      calculateFinancialAlerts({
+        fixedCostCents: breakdown.fixedCostCents,
+        revenueCents: breakdown.revenueCents,
+        cashCents,
+        workingCapitalGoalCents: business.workingCapitalGoalCents,
+      }),
+    [breakdown.fixedCostCents, breakdown.revenueCents, cashCents, business.workingCapitalGoalCents],
+  )
 
   if (isLoadingCosts || isLoadingRevenue || isLoadingWithdrawals) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
@@ -61,6 +73,7 @@ export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <h1 className="text-lg font-bold text-slate-900">{business.name}</h1>
       <ProfitSummaryCard breakdown={breakdown} />
+      <FinancialAlertsCard alerts={financialAlerts} />
       <MonthlyGoalCard business={business} breakdown={breakdown} onManageGoal={onManageGoal} />
       <MonthEndProjectionCard soFarBreakdown={breakdownSoFar} />
       <DailyCashSummary cashCents={cashCents} />
