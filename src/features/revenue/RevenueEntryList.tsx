@@ -2,17 +2,20 @@ import { Card } from '../../components/Card'
 import { CollapsibleText } from '../../components/CollapsibleText'
 import { formatCurrencyBRL } from '../../lib/currency'
 import { formatIsoDateAsBR } from '../../lib/date'
+import type { PaymentMethod } from '../paymentMethods/types'
 import type { RevenueCategory, RevenueEntry } from './types'
 
 interface RevenueEntryListProps {
   entries: RevenueEntry[]
   categories: RevenueCategory[]
+  paymentMethods: PaymentMethod[]
   onEdit: (entry: RevenueEntry) => void
   onDelete: (id: string) => Promise<void>
 }
 
-export function RevenueEntryList({ entries, categories, onEdit, onDelete }: RevenueEntryListProps) {
+export function RevenueEntryList({ entries, categories, paymentMethods, onEdit, onDelete }: RevenueEntryListProps) {
   const categoryById = new Map(categories.map((category) => [category.id, category]))
+  const paymentMethodById = new Map(paymentMethods.map((method) => [method.id, method]))
 
   return (
     <Card>
@@ -26,6 +29,7 @@ export function RevenueEntryList({ entries, categories, onEdit, onDelete }: Reve
             const hasUnits = entry.unitsSold !== null && entry.unitsSold > 0
             const averageCents = hasUnits ? Math.round(entry.amountCents / entry.unitsSold!) : null
             const category = entry.revenueCategoryId ? categoryById.get(entry.revenueCategoryId) : undefined
+            const paymentMethod = entry.paymentMethodId ? paymentMethodById.get(entry.paymentMethodId) : undefined
 
             return (
               <li key={entry.id} className="flex items-start justify-between gap-2 py-2">
@@ -35,6 +39,7 @@ export function RevenueEntryList({ entries, categories, onEdit, onDelete }: Reve
                     {hasUnits && ` — ${entry.unitsSold} unidade(s)`}
                   </p>
                   {category && <p className="text-xs text-slate-500">{category.name}</p>}
+                  {paymentMethod && <p className="text-xs text-slate-500">{paymentMethod.name}</p>}
                   {averageCents !== null && (
                     <p className="text-xs text-slate-500">{formatCurrencyBRL(averageCents)} por unidade</p>
                   )}

@@ -16,7 +16,14 @@ interface CostsPageProps {
 
 export function CostsPage({ business, onManageCategories }: CostsPageProps) {
   const { categories, isLoading: isLoadingCategories } = useCostCategories(business.id)
-  const { entries, isLoading: isLoadingEntries, createEntry, updateEntry, deleteEntry } = useCostEntries(business.id)
+  const {
+    entries,
+    isLoading: isLoadingEntries,
+    createEntry,
+    createInstallments,
+    updateEntry,
+    deleteEntry,
+  } = useCostEntries(business.id)
   const [editingEntry, setEditingEntry] = useState<CostEntry | null>(null)
 
   if (isLoadingCategories || isLoadingEntries) {
@@ -33,6 +40,7 @@ export function CostsPage({ business, onManageCategories }: CostsPageProps) {
         entryToEdit={editingEntry}
         onCancelEdit={() => setEditingEntry(null)}
         onSubmit={(input) => (editingEntry ? updateEntry(editingEntry.id, input) : createEntry(input))}
+        onSubmitInstallments={createInstallments}
         onManageCategories={onManageCategories}
       />
       <CostEntryList entries={entries} categories={categories} onEdit={setEditingEntry} onDelete={deleteEntry} />

@@ -1,15 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Card } from '../components/Card'
+import { rankCostsByCategory } from '../features/costs/calculations'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { ProductMarginCard } from '../features/reports/ProductMarginCard'
+import { CostRankingCard } from '../features/reports/CostRankingCard'
+import { BreakEvenCard } from '../features/reports/BreakEvenCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from '../features/reports/profit'
 import { calculateProductMargins } from '../features/revenue/calculations'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
+import { PriceCalculator } from '../features/pricing/PriceCalculator'
 import { formatCurrencyBRL } from '../lib/currency'
 import {
   getFirstDayOfCurrentMonthIso,
@@ -19,29 +24,38 @@ import {
   getTodayAsIsoDate,
 } from '../lib/date'
 import type { Business } from '../features/business/types'
-import type { CostKind } from '../features/costs/types'
 
 interface ReportsPageProps {
   business: Business
 }
 
 export function ReportsPage({ business }: ReportsPageProps) {
-  const { categories } = useCostCategories(business.id)
+  const { categories: costCategories } = useCostCategories(business.id)
   const { categories: revenueCategories } = useRevenueCategories(business.id)
+  const { paymentMethods } = usePaymentMethods(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const { withdrawals, isLoading: isLoadingWithdrawals } = useWithdrawals(business.id)
   const [startDate, setStartDate] = useState(getFirstDayOfCurrentMonthIso())
   const [endDate, setEndDate] = useState(getLastDayOfCurrentMonthIso())
 
-  const categoryKindById = useMemo(
-    () => new Map<string, CostKind>(categories.map((category) => [category.id, category.kind])),
-    [categories],
+  const feePercentByPaymentMethodId = useMemo(
+    () => new Map(paymentMethods.map((method) => [method.id, method.feePercent])),
+    [paymentMethods],
   )
 
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
+    () =>
+      calculateProfitForPeriod(
+        startDate,
+        endDate,
+        costEntries,
+        revenueEntries,
+        costCategories,
+        revenueCategories,
+        feePercentByPaymentMethodId,
+      ),
+    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories, feePercentByPaymentMethodId],
   )
 
   const withdrawalsCents = useMemo(
@@ -57,6 +71,13 @@ export function ReportsPage({ business }: ReportsPageProps) {
     )
     return calculateProductMargins(periodRevenueEntries, revenueCategories)
   }, [revenueEntries, revenueCategories, startDate, endDate])
+
+  // Mesma janela inclusiva de datas usada em calculateProfitForPeriod —
+  // ver reports/profit.ts.
+  const costRanking = useMemo(() => {
+    const periodCostEntries = costEntries.filter((entry) => entry.costDate >= startDate && entry.costDate <= endDate)
+    return rankCostsByCategory(periodCostEntries, costCategories)
+  }, [costEntries, costCategories, startDate, endDate])
 
   function selectCurrentMonth() {
     setStartDate(getFirstDayOfCurrentMonthIso())
@@ -130,6 +151,12 @@ export function ReportsPage({ business }: ReportsPageProps) {
       </div>
 
       <ProfitSummaryCard breakdown={breakdown} />
+
+      <BreakEvenCard breakdown={breakdown} />
+
+      <PriceCalculator />
+
+      <CostRankingCard ranking={costRanking} />
 
       <ProductMarginCard margins={productMargins} />
 

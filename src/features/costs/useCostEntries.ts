@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { calculateInstallmentPlan } from './installments'
 import type { CostEntry } from './types'
 
 interface CostEntryRow {
@@ -31,6 +32,14 @@ export interface NewCostEntryInput {
   costDate: string
   amountCents: number
   quantity?: number | null
+  notes?: string | null
+}
+
+export interface NewInstallmentPlanInput {
+  costCategoryId: string
+  totalCents: number
+  installmentCount: number
+  firstDueDate: string
   notes?: string | null
 }
 
@@ -80,6 +89,32 @@ export function useCostEntries(businessId: string) {
     return entry
   }
 
+  // Cria um cost_entry por parcela, de uma vez só (ver installments.ts pro
+  // cálculo de valor/data de cada parcela) — usado pelo "parcelador
+  // automático" de compras financiadas (ex: uma máquina, um ar
+  // condicionado). Cada parcela é um lançamento comum depois de criada,
+  // editável/excluível individualmente como qualquer outro custo.
+  async function createInstallments(input: NewInstallmentPlanInput): Promise<CostEntry[]> {
+    const plan = calculateInstallmentPlan(input.totalCents, input.installmentCount, input.firstDueDate)
+
+    const { data, error: insertError } = await supabase
+      .from('cost_entries')
+      .insert(
+        plan.map((item, index) => ({
+          business_id: businessId,
+          cost_category_id: input.costCategoryId,
+          cost_date: item.date,
+          amount_cents: item.amountCents,
+          notes: [input.notes?.trim() || null, `(parcela ${index + 1} de ${plan.length})`].filter(Boolean).join(' '),
+        })),
+      )
+      .select()
+    if (insertError) throw insertError
+    const newEntries = (data as CostEntryRow[]).map(mapRow)
+    setEntries((current) => [...newEntries, ...current])
+    return newEntries
+  }
+
   // Editar um lançamento de qualquer data (passada ou não) é sempre
   // permitido, pelo mesmo motivo do deleteEntry logo abaixo.
   async function updateEntry(id: string, input: NewCostEntryInput): Promise<CostEntry> {
@@ -110,5 +145,5 @@ export function useCostEntries(businessId: string) {
     setEntries((current) => current.filter((entry) => entry.id !== id))
   }
 
-  return { entries, isLoading, error, createEntry, updateEntry, deleteEntry, refresh }
+  return { entries, isLoading, error, createEntry, createInstallments, updateEntry, deleteEntry, refresh }
 }
