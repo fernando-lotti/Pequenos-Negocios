@@ -156,3 +156,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Pedir a margem como porcentagem do preço de venda (comum em outras ferramentas, ex: "quero 30% de margem") — rejeitada porque criaria um segundo significado de "margem" dentro do mesmo app, o que é confuso justamente pro público que o produto quer educar.
 
 **Consequências:** Quem já está acostumado a pensar em margem como porcentagem precisa converter mentalmente pra R$ antes de usar a calculadora — aceitável porque a tela já mostra a porcentagem equivalente depois do cálculo, e mantém consistência com o resto do app.
+
+---
+
+## [2026-08-12] — Ponto de equilíbrio reaproveita fixedCostCents e marginPerUnitCents, sem novo dado
+
+**Contexto:** Queríamos mostrar quantas vendas/atendimentos faltam pra cobrir os custos fixos do período (issue #21), mas o produto já calcula tudo que é preciso pra isso: `fixedCostCents` e `marginPerUnitCents` (`reports/profit.ts`).
+
+**Decisão:** `calculateBreakEven` (`reports/breakEven.ts`) é só `Math.ceil(fixedCostCents / marginPerUnitCents)`, arredondado pra cima porque não existe "meia venda". Herda a mesma limitação da margem: só aparece quando `marginPerUnitCents` não é `null` (a pessoa precisa ter preenchido "Quantidade" em pelo menos uma receita do período). Quando a margem é zero ou negativa, o card não mostra um número de vendas (matematicamente daria infinito ou negativo) — mostra uma mensagem orientando a revisar preço/custo variável em vez disso.
+
+**Alternativas consideradas:** Nenhuma alternativa de cálculo — é a fórmula padrão de ponto de equilíbrio. A única decisão real foi como lidar com margem ≤ 0, e optamos por uma mensagem explicativa em vez de esconder o card silenciosamente, pra reforçar o caráter educativo do produto.
+
+**Consequências:** Herda a mesma aproximação da margem (é uma média do período, não por produto/serviço individual — ver ADR "Margem é uma média do mês").

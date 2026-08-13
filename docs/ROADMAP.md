@@ -21,6 +21,7 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 - [x] Cálculo de margem por unidade vendida/atendimento
 - [x] Calculadora de preço de venda (custo da unidade + margem desejada)
 - [x] Meta mensal de lucro ou faturamento, com barra de progresso no Dashboard
+- [x] Ponto de equilíbrio (quantas vendas/atendimentos pra cobrir os custos fixos)
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)
 
