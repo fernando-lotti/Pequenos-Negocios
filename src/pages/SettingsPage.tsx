@@ -2,18 +2,22 @@ import { useMemo } from 'react'
 import { Card } from '../components/Card'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { BUSINESS_TYPE_INFO } from '../features/business/businessTypePresets'
+import { MonthlyGoalForm } from '../features/business/MonthlyGoalForm'
 import { CostCategoryManager } from '../features/costs/CostCategoryManager'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
+import { PaymentMethodManager } from '../features/paymentMethods/PaymentMethodManager'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { RevenueCategoryManager } from '../features/revenue/RevenueCategoryManager'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { supabase } from '../lib/supabase'
-import type { Business } from '../features/business/types'
+import type { Business, MonthlyGoalInput } from '../features/business/types'
 
 interface SettingsPageProps {
   business: Business
   userEmail: string
+  onSaveMonthlyGoal: (businessId: string, goal: MonthlyGoalInput | null) => Promise<unknown>
 }
 
 // O cadastro de categorias (de custo e de receita) mora aqui, em vez de
@@ -21,7 +25,7 @@ interface SettingsPageProps {
 // do negócio, não do dia a dia de lançar valores — os formulários de
 // lançamento levam pra cá através da opção "+ Nova categoria" (ver
 // CostEntryForm.tsx e RevenueEntryForm.tsx).
-export function SettingsPage({ business, userEmail }: SettingsPageProps) {
+export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: SettingsPageProps) {
   const {
     categories: costCategories,
     isLoading: isLoadingCostCategories,
@@ -40,6 +44,14 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
   } = useRevenueCategories(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenueEntries } = useRevenueEntries(business.id)
 
+  const {
+    paymentMethods,
+    isLoading: isLoadingPaymentMethods,
+    createPaymentMethod,
+    updatePaymentMethod,
+    deletePaymentMethod,
+  } = usePaymentMethods(business.id)
+
   const usedCostCategoryIds = useMemo(
     () => new Set(costEntries.map((entry) => entry.costCategoryId).filter((id): id is string => id !== null)),
     [costEntries],
@@ -48,9 +60,17 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
     () => new Set(revenueEntries.map((entry) => entry.revenueCategoryId).filter((id): id is string => id !== null)),
     [revenueEntries],
   )
+  const usedPaymentMethodIds = useMemo(
+    () => new Set(revenueEntries.map((entry) => entry.paymentMethodId).filter((id): id is string => id !== null)),
+    [revenueEntries],
+  )
 
   const isLoading =
-    isLoadingCostCategories || isLoadingCostEntries || isLoadingRevenueCategories || isLoadingRevenueEntries
+    isLoadingCostCategories ||
+    isLoadingCostEntries ||
+    isLoadingRevenueCategories ||
+    isLoadingRevenueEntries ||
+    isLoadingPaymentMethods
 
   if (isLoading) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
@@ -69,6 +89,8 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
         </p>
       </Card>
 
+      <MonthlyGoalForm business={business} onSave={onSaveMonthlyGoal} />
+
       <CostCategoryManager
         categories={costCategories}
         usedCategoryIds={usedCostCategoryIds}
@@ -83,6 +105,14 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
         onCreate={createRevenueCategory}
         onUpdate={updateRevenueCategory}
         onDelete={deleteRevenueCategory}
+      />
+
+      <PaymentMethodManager
+        paymentMethods={paymentMethods}
+        usedPaymentMethodIds={usedPaymentMethodIds}
+        onCreate={createPaymentMethod}
+        onUpdate={updatePaymentMethod}
+        onDelete={deletePaymentMethod}
       />
 
       <Card>

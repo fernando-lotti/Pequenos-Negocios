@@ -135,6 +135,94 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 
 ---
 
+## [2026-08-12] — Meta mensal: lucro ou faturamento, campo simples em `businesses`
+
+**Contexto:** O time queria uma forma de acompanhar progresso rumo a um objetivo do mês, mas lucro e faturamento (receita bruta) são números bem diferentes — nem todo negócio quer acompanhar o mesmo.
+
+**Decisão:** Duas colunas opcionais em `businesses` — `monthly_goal_cents` e `monthly_goal_type` (`'profit' | 'revenue'`) — em vez de uma tabela própria de "metas". O dono escolhe o tipo ao definir a meta em Ajustes (`MonthlyGoalForm.tsx`); o Dashboard mostra uma barra de progresso comparando o lucro ou faturamento do **mês atual** (sempre recalculado ao vivo, igual todo o resto do produto) contra essa meta (`MonthlyGoalCard.tsx`, `reports/goalProgress.ts`). Mesmo padrão já usado pra `working_capital_goal_cents`: meta é sempre um valor único (não há histórico de metas passadas).
+
+**Alternativas consideradas:** Tabela própria `monthly_goals` com uma linha por mês/negócio, permitindo metas diferentes a cada mês e um histórico — rejeitada por enquanto por adicionar complexidade (mais uma tabela, mais RLS) sem uma necessidade clara ainda; forçar só meta de lucro (sem escolha de tipo) — rejeitada porque faturamento é mais fácil de entender pra quem está começando, e lucro é mais alinhado ao objetivo #1 do produto, então faz sentido deixar a pessoa escolher.
+
+**Consequências:** A meta é sempre "a atual" — trocar o valor no meio do mês substitui a meta anterior, sem guardar o que era antes. Se o produto evoluir pra precisar de metas por mês específico (ex: comparar metas de meses diferentes num relatório), isso vira uma tabela própria depois.
+
+---
+
+## [2026-08-12] — Calculadora de preço de venda usa margem em R$, não em porcentagem
+
+**Contexto:** Precisávamos de uma calculadora simples pra ajudar o dono a decidir por quanto vender algo, mas o app já tem um significado estabelecido pra "margem" (valor em R$ que sobra por unidade, ver `reports/profit.ts` e `GLOSSARY.md`) — diferente do "markup"/margem percentual comum em outras ferramentas.
+
+**Decisão:** A calculadora (`features/pricing/`) pede custo da unidade e margem desejada, os dois em R$, e soma os dois pra sugerir o preço (`calculateSuggestedPrice`). Não persiste nada no banco — é só uma ferramenta de apoio, sem lançamento nem histórico. Mostra a porcentagem que a margem representa do preço final como informação extra (não como campo de entrada), pra não misturar dois jeitos de pensar em margem na mesma tela.
+
+**Alternativas consideradas:** Pedir a margem como porcentagem do preço de venda (comum em outras ferramentas, ex: "quero 30% de margem") — rejeitada porque criaria um segundo significado de "margem" dentro do mesmo app, o que é confuso justamente pro público que o produto quer educar.
+
+**Consequências:** Quem já está acostumado a pensar em margem como porcentagem precisa converter mentalmente pra R$ antes de usar a calculadora — aceitável porque a tela já mostra a porcentagem equivalente depois do cálculo, e mantém consistência com o resto do app.
+
+---
+
+## [2026-08-12] — Ponto de equilíbrio reaproveita fixedCostCents e marginPerUnitCents, sem novo dado
+
+**Contexto:** Queríamos mostrar quantas vendas/atendimentos faltam pra cobrir os custos fixos do período (issue #21), mas o produto já calcula tudo que é preciso pra isso: `fixedCostCents` e `marginPerUnitCents` (`reports/profit.ts`).
+
+**Decisão:** `calculateBreakEven` (`reports/breakEven.ts`) é só `Math.ceil(fixedCostCents / marginPerUnitCents)`, arredondado pra cima porque não existe "meia venda". Herda a mesma limitação da margem: só aparece quando `marginPerUnitCents` não é `null` (a pessoa precisa ter preenchido "Quantidade" em pelo menos uma receita do período). Quando a margem é zero ou negativa, o card não mostra um número de vendas (matematicamente daria infinito ou negativo) — mostra uma mensagem orientando a revisar preço/custo variável em vez disso.
+
+**Alternativas consideradas:** Nenhuma alternativa de cálculo — é a fórmula padrão de ponto de equilíbrio. A única decisão real foi como lidar com margem ≤ 0, e optamos por uma mensagem explicativa em vez de esconder o card silenciosamente, pra reforçar o caráter educativo do produto.
+
+**Consequências:** Herda a mesma aproximação da margem (é uma média do período, não por produto/serviço individual — ver ADR "Margem é uma média do mês").
+
+---
+
+## [2026-08-12] — Projeção de fim de mês: média diária simples, calculada só até hoje
+
+**Contexto:** Queríamos dar uma ideia de "como o mês deve terminar" no Dashboard (issue #22), sem construir um modelo de previsão sofisticado — o público-alvo se beneficia mais de uma estimativa simples e clara do que de uma "IA prevendo o futuro".
+
+**Decisão:** `calculateMonthEndProjection` (`reports/monthEndProjection.ts`) pega receita e custo acumulados **do início do mês até hoje** (não até o fim do mês) e extrapola linearmente pelos dias que faltam: `valor até hoje ÷ dias já passados × total de dias do mês`. Importante: o Dashboard calcula esse breakdown "até hoje" separado do breakdown do mês inteiro (`DashboardPage.tsx`, `breakdownSoFar`), porque o produto permite datar lançamentos no futuro (não trava datas) — usar o breakdown do mês inteiro contaria custos/receitas ainda não realizados como se já tivessem acontecido, inflando a base da projeção.
+
+**Alternativas consideradas:** Média móvel dos últimos N dias (mais sensível a mudanças recentes de ritmo) — descartada por ser mais difícil de explicar pro time não-técnico do que uma média simples do mês inteiro; não mostrar projeção nenhuma até o mês estar mais avançado (ex: só a partir do dia 5) — descartada porque a UI já deixa claro que é uma estimativa, e um número aproximado desde o dia 1 ainda é mais útil do que nenhum número.
+
+**Consequências:** A projeção é bem instável nos primeiros dias do mês (uma venda grande no dia 1 pode projetar um mês inteiro exagerado) — aceitável porque o texto já avisa "fica mais confiável conforme o mês avança", mas vale revisitar se isso confundir os usuários na prática.
+
+---
+
+## [2026-08-12] — Ranking de custos por categoria estende totalsByCategory, filtragem de período fica na página
+
+**Contexto:** Queríamos um ranking das categorias de custo do período, da que mais pesa pra que menos pesa (issue #23). `costs/calculations.ts` já tinha `totalsByCategory`, que soma por categoria mas não ordena, não resolve nome, e não calcula porcentagem do total.
+
+**Decisão:** Nova função `rankCostsByCategory(entries, categories)` em `costs/calculations.ts`, reaproveitando `totalsByCategory` por dentro, que resolve o nome de cada categoria, calcula `percentOfTotal` e ordena do maior pro menor. Ela não sabe nada sobre "período" — recebe os lançamentos já filtrados. Quem filtra por período é `ReportsPage.tsx`, com o mesmo filtro inclusivo de datas (`costDate >= startDate && costDate <= endDate`) já usado em `calculateProfitForPeriod`, mantendo a lógica de filtro de data centralizada num padrão só, mesmo que reaproveitada em dois lugares.
+
+**Alternativas consideradas:** Fazer `rankCostsByCategory` receber `startDate`/`endDate` e filtrar internamente — rejeitado porque duplicaria a regra de filtro de data que já vive implicitamente em `profit.ts`, e misturaria duas responsabilidades (agrupar por categoria + filtrar por data) na mesma função.
+
+**Consequências:** Nenhuma — é aditivo, não muda nenhum cálculo existente. `totalsByCategory` continua exportada e usável isoladamente (hoje só usada internamente por `rankCostsByCategory`).
+
+---
+
+## [2026-08-12] — Alertas de saúde financeira: regras fixas em código, sem tabela de configuração
+
+**Contexto:** Queríamos transformar números que o app já mostra em avisos ativos (issue #24), sem virar um sistema de notificação nem um "score financeiro" complexo.
+
+**Decisão:** `calculateFinancialAlerts` (`reports/financialAlerts.ts`) recebe os números já calculados (custo fixo, receita, caixa, meta de capital de giro) e devolve uma lista de alertas com base em duas regras fixas no código: custo fixo consumindo mais de 50% da receita do período, e caixa abaixo da meta de capital de giro (quando definida). `FinancialAlertsCard.tsx`, no Dashboard, só renderiza algo quando a lista não está vazia — sem alerta ativo, o card nem entra no DOM. Os limiares (ex: 50%) são constantes no código, não configuráveis pelo usuário nesta primeira versão.
+
+**Consequências:** O alerta de "caixa abaixo da meta" depende de `working_capital_goal_cents`, que existe no banco desde o início mas **não tem nenhuma tela pra editar** — hoje é sempre `null` na prática, então esse alerta específico não dispara pra ninguém ainda. Registrado como pendência no backlog (`docs/ROADMAP.md`); não resolvido nesta issue pra não misturar duas mudanças de escopos diferentes no mesmo PR. O limiar de 50% pro custo fixo é um valor de referência do time, não uma regra contábil — pode precisar de ajuste depois de observar uso real.
+
+**Alternativas consideradas:** Tornar os limiares configuráveis por negócio (ex: "me avise quando custo fixo passar de X%") — rejeitado por ora por adicionar mais um formulário de configuração sem validação de que o valor fixo de 50% já não é suficiente.
+
+---
+
+## [2026-08-12] — Taxa de forma de pagamento: descontada ao vivo do lucro e do caixa, não vira cost_entry
+
+**Contexto:** O time queria capturar a forma de pagamento de cada receita (Pix, Débito, Crédito, Parcelado) e descontar automaticamente a taxa da maquininha do lucro real. Já existia uma coluna `revenue_entries.payment_method` (texto livre) desde o início do projeto, mas nunca foi usada em nenhuma tela — o dado ficava sempre vazio.
+
+**Decisão:** Nova tabela `payment_methods` (business_id, name, fee_percent, mesmo padrão de RLS/edição de `cost_categories`), com preset inicial em `src/features/paymentMethods/defaultPaymentMethods.ts` (Dinheiro e Pix sem taxa, Débito 3%, Crédito à vista 5%, Crédito parcelado 8% — valores de referência, editáveis). A antiga coluna `revenue_entries.payment_method` (texto livre) foi **removida** e substituída por `payment_method_id`, referência à tabela nova.
+
+A taxa **não vira um `cost_entry`** — `calculateProfitForPeriod` e `calculateAccumulatedCash` (`reports/profit.ts`) recebem um `feePercentByPaymentMethodId: Map<string, number>` e calculam `cardFeeCents` ao vivo, a partir da forma de pagamento escolhida em cada receita (`entry.amountCents × feePercent`), subtraindo do lucro (`profitCents`) e do caixa acumulado. Segue o mesmo princípio de "caixa sempre calculado ao vivo" (ver ADR de 2026-08-11): gerar um `cost_entry` automático a cada receita exigiria manter os dois sincronizados toda vez que a receita ou a forma de pagamento mudasse, criando risco de divergência.
+
+Importante: a taxa **não entra no cálculo de `marginPerUnitCents`** (margem por unidade) — só é descontada no nível do lucro total do período. Misturar os dois exigiria decidir taxa por unidade vendida numa receita que pode ter várias unidades e uma única forma de pagamento, complexidade não resolvida nesta mudança.
+
+**Alternativas consideradas:** Manter a taxa como informativa (mostrar "líquido após taxa" sem alterar o lucro) — rejeitada porque o objetivo #1 do produto é mostrar o lucro real, e a taxa é dinheiro que de fato nunca chega a entrar no caixa; gerar um `cost_entry` automático por receita com forma de pagamento — rejeitada pelo risco de dessincronia descrito acima; taxas fixas no código, sem tabela editável — rejeitada porque a taxa real varia por maquininha/banco/plano de cada pessoa, tornar isso fixo tornaria o número errado pra maioria dos usuários.
+
+**Consequências:** Editar a taxa de uma forma de pagamento em Ajustes muda o lucro de **todo o histórico** que usou essa forma de pagamento, não só dos lançamentos futuros — comportamento esperado nesse produto (nunca tranca o passado, ver ADR de 2026-08-11), mas vale deixar isso claro pro time. Excluir uma forma de pagamento não apaga lançamentos, só os deixa "sem forma de pagamento" (sem taxa descontada) até serem reclassificados, mesmo padrão de categoria excluída.
+
+---
+
 ## [2026-08-12] — Parcelador automático gera cost_entries de verdade, sem tabela de "compra parcelada"
 
 **Contexto:** O dono às vezes faz uma compra financiada (uma máquina, um ar condicionado) e precisava lançar cada parcela manualmente, mês a mês. O modelo de dados já suporta isso (`cost_entries.cost_date` aceita qualquer data, inclusive futura — ver ADR "Nunca existe fechamento ou trava do passado"), então não era um problema de modelo, só de UX repetitiva.

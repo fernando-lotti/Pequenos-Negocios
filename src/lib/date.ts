@@ -40,6 +40,17 @@ export function getLastDayOfCurrentMonthIso(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 }
 
+/** Quantos dias tem o mês atual (28 a 31) — usado na projeção de fim de mês do Dashboard. */
+export function getDaysInCurrentMonth(): number {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+}
+
+/** Em que dia do mês atual estamos (1 a 31) — usado na projeção de fim de mês do Dashboard. */
+export function getDayOfCurrentMonth(): number {
+  return new Date().getDate()
+}
+
 /** 1º de janeiro do ano atual, no formato "AAAA-MM-DD" — usado no atalho "Ano atual" dos relatórios. */
 export function getFirstDayOfCurrentYearIso(): string {
   return `${new Date().getFullYear()}-01-01`

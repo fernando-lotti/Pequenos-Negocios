@@ -5,14 +5,17 @@ import { PrimaryButton } from '../../components/PrimaryButton'
 import { fieldClass, labelClass } from '../../components/Field'
 import { centsToAmountInputText, parseTypedAmountToCents } from '../../lib/currency'
 import { getTodayAsIsoDate } from '../../lib/date'
+import type { PaymentMethod } from '../paymentMethods/types'
 import type { RevenueCategory, RevenueEntry } from './types'
 import type { NewRevenueEntryInput } from './useRevenueEntries'
 
 // Ver comentário equivalente em CostEntryForm.tsx.
 const NEW_CATEGORY_OPTION_VALUE = '__new__'
+const NEW_PAYMENT_METHOD_OPTION_VALUE = '__new_payment_method__'
 
 interface RevenueEntryFormProps {
   categories: RevenueCategory[]
+  paymentMethods: PaymentMethod[]
   onSubmit: (input: NewRevenueEntryInput) => Promise<unknown>
   // Ver comentário equivalente em CostEntryForm.tsx.
   entryToEdit?: RevenueEntry | null
@@ -20,19 +23,26 @@ interface RevenueEntryFormProps {
   // Leva pra aba Ajustes, onde agora fica o cadastro de categorias de
   // receita (ver SettingsPage.tsx) — usado pela opção "+ Nova categoria".
   onManageCategories: () => void
+  // Mesma ideia, pro cadastro de formas de pagamento (ver PaymentMethodManager.tsx).
+  onManagePaymentMethods: () => void
 }
 
 export function RevenueEntryForm({
   categories,
+  paymentMethods,
   onSubmit,
   entryToEdit,
   onCancelEdit,
   onManageCategories,
+  onManagePaymentMethods,
 }: RevenueEntryFormProps) {
   // Diferente de categoria de custo, categoria de receita é opcional — nem
   // todo negócio precisa separar de onde vem a receita, então o padrão é
   // "Sem categoria" (valor vazio) em vez de forçar a primeira da lista.
   const [revenueCategoryId, setRevenueCategoryId] = useState(entryToEdit?.revenueCategoryId ?? '')
+  // Forma de pagamento também é opcional, mesmo motivo — nem toda receita
+  // tem uma (ex: alguém que só recebe em dinheiro e não quer detalhar).
+  const [paymentMethodId, setPaymentMethodId] = useState(entryToEdit?.paymentMethodId ?? '')
   const [revenueDate, setRevenueDate] = useState(entryToEdit?.revenueDate ?? getTodayAsIsoDate())
   const [amountText, setAmountText] = useState(entryToEdit ? centsToAmountInputText(entryToEdit.amountCents) : '')
   const [unitsSoldText, setUnitsSoldText] = useState(entryToEdit?.unitsSold != null ? String(entryToEdit.unitsSold) : '')
@@ -62,6 +72,7 @@ export function RevenueEntryForm({
       const unitsSold = unitsSoldText.trim() ? Number(unitsSoldText) : null
       await onSubmit({
         revenueCategoryId: revenueCategoryId || null,
+        paymentMethodId: paymentMethodId || null,
         revenueDate,
         amountCents,
         unitsSold,
@@ -119,6 +130,43 @@ export function RevenueEntryForm({
               className="rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-emerald-700"
             >
               + Cadastrar categoria de receita
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="revenue-payment-method" className={labelClass}>
+            Forma de pagamento (opcional)
+          </label>
+          {paymentMethods.length > 0 ? (
+            <select
+              id="revenue-payment-method"
+              value={paymentMethodId}
+              onChange={(event) => {
+                if (event.target.value === NEW_PAYMENT_METHOD_OPTION_VALUE) {
+                  onManagePaymentMethods()
+                  return
+                }
+                setPaymentMethodId(event.target.value)
+              }}
+              className={fieldClass}
+            >
+              <option value="">Sem forma de pagamento</option>
+              {paymentMethods.map((method) => (
+                <option key={method.id} value={method.id}>
+                  {method.name}
+                  {method.feePercent > 0 ? ` (${method.feePercent}% de taxa)` : ''}
+                </option>
+              ))}
+              <option value={NEW_PAYMENT_METHOD_OPTION_VALUE}>+ Nova forma de pagamento</option>
+            </select>
+          ) : (
+            <button
+              type="button"
+              onClick={onManagePaymentMethods}
+              className="rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-emerald-700"
+            >
+              + Cadastrar forma de pagamento
             </button>
           )}
         </div>
