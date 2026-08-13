@@ -6,6 +6,8 @@ import { MonthlyGoalForm } from '../features/business/MonthlyGoalForm'
 import { CostCategoryManager } from '../features/costs/CostCategoryManager'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
+import { PaymentMethodManager } from '../features/paymentMethods/PaymentMethodManager'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { RevenueCategoryManager } from '../features/revenue/RevenueCategoryManager'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
@@ -42,6 +44,14 @@ export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: Setting
   } = useRevenueCategories(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenueEntries } = useRevenueEntries(business.id)
 
+  const {
+    paymentMethods,
+    isLoading: isLoadingPaymentMethods,
+    createPaymentMethod,
+    updatePaymentMethod,
+    deletePaymentMethod,
+  } = usePaymentMethods(business.id)
+
   const usedCostCategoryIds = useMemo(
     () => new Set(costEntries.map((entry) => entry.costCategoryId).filter((id): id is string => id !== null)),
     [costEntries],
@@ -50,9 +60,17 @@ export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: Setting
     () => new Set(revenueEntries.map((entry) => entry.revenueCategoryId).filter((id): id is string => id !== null)),
     [revenueEntries],
   )
+  const usedPaymentMethodIds = useMemo(
+    () => new Set(revenueEntries.map((entry) => entry.paymentMethodId).filter((id): id is string => id !== null)),
+    [revenueEntries],
+  )
 
   const isLoading =
-    isLoadingCostCategories || isLoadingCostEntries || isLoadingRevenueCategories || isLoadingRevenueEntries
+    isLoadingCostCategories ||
+    isLoadingCostEntries ||
+    isLoadingRevenueCategories ||
+    isLoadingRevenueEntries ||
+    isLoadingPaymentMethods
 
   if (isLoading) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
@@ -87,6 +105,14 @@ export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: Setting
         onCreate={createRevenueCategory}
         onUpdate={updateRevenueCategory}
         onDelete={deleteRevenueCategory}
+      />
+
+      <PaymentMethodManager
+        paymentMethods={paymentMethods}
+        usedPaymentMethodIds={usedPaymentMethodIds}
+        onCreate={createPaymentMethod}
+        onUpdate={updatePaymentMethod}
+        onDelete={deletePaymentMethod}
       />
 
       <Card>

@@ -4,6 +4,7 @@ import { rankCostsByCategory } from '../features/costs/calculations'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { CostRankingCard } from '../features/reports/CostRankingCard'
 import { BreakEvenCard } from '../features/reports/BreakEvenCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
@@ -29,15 +30,30 @@ interface ReportsPageProps {
 export function ReportsPage({ business }: ReportsPageProps) {
   const { categories: costCategories } = useCostCategories(business.id)
   const { categories: revenueCategories } = useRevenueCategories(business.id)
+  const { paymentMethods } = usePaymentMethods(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const { withdrawals, isLoading: isLoadingWithdrawals } = useWithdrawals(business.id)
   const [startDate, setStartDate] = useState(getFirstDayOfCurrentMonthIso())
   const [endDate, setEndDate] = useState(getLastDayOfCurrentMonthIso())
 
+  const feePercentByPaymentMethodId = useMemo(
+    () => new Map(paymentMethods.map((method) => [method.id, method.feePercent])),
+    [paymentMethods],
+  )
+
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories),
-    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories],
+    () =>
+      calculateProfitForPeriod(
+        startDate,
+        endDate,
+        costEntries,
+        revenueEntries,
+        costCategories,
+        revenueCategories,
+        feePercentByPaymentMethodId,
+      ),
+    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories, feePercentByPaymentMethodId],
   )
 
   const withdrawalsCents = useMemo(

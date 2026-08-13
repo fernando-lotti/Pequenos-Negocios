@@ -44,4 +44,9 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
     title: '💡 O que é ponto de equilíbrio?',
     body: 'É a quantidade de vendas ou atendimentos que você precisa fazer só pra cobrir os custos fixos do período (aluguel, parcelas, etc.). Antes de bater esse número, cada venda ainda está "pagando" seus custos fixos; depois dele, o que sobra de cada venda vira lucro de verdade.',
   },
+  taxa_de_pagamento: {
+    id: 'taxa_de_pagamento',
+    title: '💡 Por que o valor lançado é diferente do que cai na conta?',
+    body: 'Quando você recebe por Pix não tem desconto, mas no cartão a maquininha ou o banco costuma cobrar uma taxa antes do dinheiro cair na sua conta. O app já desconta essa taxa automaticamente do seu lucro e do seu caixa, de acordo com a forma de pagamento que você escolher em cada receita — você pode ajustar as taxas em Ajustes → Formas de pagamento.',
+  },
 }

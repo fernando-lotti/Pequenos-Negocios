@@ -88,7 +88,24 @@ export function ProfitSummaryCard({ breakdown }: ProfitSummaryCardProps) {
             </Fragment>
           ))
         )}
+
+        {breakdown.cardFeeCents > 0 && (
+          <>
+            <dt className="text-slate-500">Taxas de pagamento</dt>
+            <dd className="text-right font-medium text-slate-900">{formatCurrencyBRL(breakdown.cardFeeCents)}</dd>
+          </>
+        )}
       </dl>
+
+      {breakdown.cardFeeCents > 0 && (
+        <div className="mt-2 flex flex-col gap-2">
+          <p className="text-xs text-slate-500">
+            "Taxas de pagamento" é o que a maquininha/banco descontou das receitas do período, de acordo com a forma
+            de pagamento escolhida em cada uma (ver Ajustes → Formas de pagamento).
+          </p>
+          <ConceptTip conceptId="taxa_de_pagamento" />
+        </div>
+      )}
 
       {breakdown.uncategorizedCostCents > 0 && (
         <p className="mt-2 text-xs text-slate-500">

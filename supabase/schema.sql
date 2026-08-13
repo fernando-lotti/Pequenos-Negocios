@@ -182,24 +182,65 @@ on revenue_categories for delete
 using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 -- ----------------------------------------------------------------------------
+-- Tabela: payment_methods ("Forma de pagamento", ver GLOSSARY.md)
+--
+-- fee_percent é a taxa que a maquininha/banco cobra nessa forma de
+-- pagamento (ex: Crédito parcelado = 8 significa 8%) — usada pra descontar
+-- automaticamente a taxa do lucro e do caixa (ver reports/profit.ts,
+-- cardFeeCents). Preset inicial em src/features/paymentMethods/defaultPaymentMethods.ts
+-- (Pix 0%, Débito 3%, Crédito à vista 5%, Crédito parcelado 8%), mas é só o
+-- ponto de partida — totalmente editável, mesmo padrão de cost_categories.
+-- ----------------------------------------------------------------------------
+create table if not exists payment_methods (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  name text not null,
+  fee_percent numeric not null default 0 check (fee_percent >= 0 and fee_percent < 100),
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+alter table payment_methods enable row level security;
+
+create policy "Dono vê formas de pagamento dos próprios negócios"
+on payment_methods for select
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono cria formas de pagamento nos próprios negócios"
+on payment_methods for insert
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono atualiza formas de pagamento dos próprios negócios"
+on payment_methods for update
+using (business_id in (select id from businesses where owner_id = auth.uid()))
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create policy "Dono exclui formas de pagamento dos próprios negócios"
+on payment_methods for delete
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create index if not exists idx_payment_methods_business_id on payment_methods (business_id);
+
+-- ----------------------------------------------------------------------------
 -- Tabela: revenue_entries ("Lançamento de receita" / registro diário, ver GLOSSARY.md)
 --
 -- units_sold é opcional (ex: quantos atendimentos, quantos saquinhos de
 -- pipoca) — capturado desde já porque é barato, mas o cálculo de margem
 -- por unidade fica pra Fase 2 (ver docs/ROADMAP.md).
 --
--- revenue_category_id é opcional (on delete set null) — mesmo padrão de
--- cost_entries.cost_category_id: excluir uma categoria de receita não
--- apaga os lançamentos que a usavam, eles só ficam "sem categoria".
+-- revenue_category_id e payment_method_id são opcionais (on delete set
+-- null) — mesmo padrão de cost_entries.cost_category_id: excluir uma
+-- categoria/forma de pagamento não apaga os lançamentos que a usavam, eles
+-- só ficam "sem categoria"/"sem forma de pagamento".
 -- ----------------------------------------------------------------------------
 create table if not exists revenue_entries (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses (id) on delete cascade,
   revenue_category_id uuid references revenue_categories (id) on delete set null,
+  payment_method_id uuid references payment_methods (id) on delete set null,
   revenue_date date not null,
   amount_cents bigint not null check (amount_cents > 0),
   units_sold numeric,
-  payment_method text,
   notes text,
   created_at timestamptz not null default now()
 );
@@ -403,3 +444,51 @@ alter table businesses add column if not exists monthly_goal_cents bigint;
 alter table businesses add column if not exists monthly_goal_type text;
 alter table businesses drop constraint if exists businesses_monthly_goal_type_check;
 alter table businesses add constraint businesses_monthly_goal_type_check check (monthly_goal_type in ('profit', 'revenue'));
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (issue: forma de pagamento com taxa da maquininha, descontada
+-- automaticamente do lucro e do caixa). Cria a tabela payment_methods e troca
+-- a antiga coluna revenue_entries.payment_method (texto livre, nunca chegou
+-- a ser usada em nenhuma tela) por payment_method_id (referência à tabela
+-- nova). Projeto novo, rodando o arquivo inteiro pela primeira vez, pode
+-- ignorar este bloco — já nasce assim.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+create table if not exists payment_methods (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  name text not null,
+  fee_percent numeric not null default 0 check (fee_percent >= 0 and fee_percent < 100),
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+alter table payment_methods enable row level security;
+
+drop policy if exists "Dono vê formas de pagamento dos próprios negócios" on payment_methods;
+create policy "Dono vê formas de pagamento dos próprios negócios"
+on payment_methods for select
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono cria formas de pagamento nos próprios negócios" on payment_methods;
+create policy "Dono cria formas de pagamento nos próprios negócios"
+on payment_methods for insert
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono atualiza formas de pagamento dos próprios negócios" on payment_methods;
+create policy "Dono atualiza formas de pagamento dos próprios negócios"
+on payment_methods for update
+using (business_id in (select id from businesses where owner_id = auth.uid()))
+with check (business_id in (select id from businesses where owner_id = auth.uid()));
+
+drop policy if exists "Dono exclui formas de pagamento dos próprios negócios" on payment_methods;
+create policy "Dono exclui formas de pagamento dos próprios negócios"
+on payment_methods for delete
+using (business_id in (select id from businesses where owner_id = auth.uid()));
+
+create index if not exists idx_payment_methods_business_id on payment_methods (business_id);
+
+alter table revenue_entries add column if not exists payment_method_id uuid references payment_methods (id) on delete set null;
+alter table revenue_entries drop column if exists payment_method;

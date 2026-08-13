@@ -23,10 +23,10 @@ function makeRevenueEntry(overrides: Partial<RevenueEntry>): RevenueEntry {
     id: 'revenue-1',
     businessId: 'business-1',
     revenueCategoryId: null,
+    paymentMethodId: null,
     revenueDate: '2026-08-05',
     amountCents: 5000,
     unitsSold: null,
-    paymentMethod: null,
     notes: null,
     createdAt: '2026-08-05T00:00:00.000Z',
     ...overrides,
@@ -73,6 +73,11 @@ const costCategories = [
   makeCostCategory({ id: 'category-fixed', name: 'Aluguel', kind: 'fixed' }),
   makeCostCategory({ id: 'category-variable', name: 'Embalagens', kind: 'variable' }),
 ]
+
+const feePercentByPaymentMethodId = new Map<string, number>([
+  ['pix', 0],
+  ['credito', 8],
+])
 
 describe('calculateProfitForPeriod', () => {
   it('calcula lucro = receitas menos custos fixos e variáveis do período', () => {
@@ -213,6 +218,51 @@ describe('calculateProfitForPeriod', () => {
     expect(result.marginPerUnitCents).toBeNull()
   })
 
+  it('desconta a taxa da forma de pagamento do lucro, de acordo com a receita', () => {
+    const revenueEntries = [
+      makeRevenueEntry({ amountCents: 10000, paymentMethodId: 'credito' }),
+      makeRevenueEntry({ amountCents: 5000, paymentMethodId: 'pix' }),
+    ]
+
+    const result = calculateProfitForPeriod(
+      '2026-08-01',
+      '2026-08-31',
+      [],
+      revenueEntries,
+      costCategories,
+      [],
+      feePercentByPaymentMethodId,
+    )
+
+    // 10000 * 8% = 800 de taxa no crédito; Pix não tem taxa (0%)
+    expect(result.cardFeeCents).toBe(800)
+    expect(result.profitCents).toBe(15000 - 800)
+  })
+
+  it('não desconta taxa de receita sem forma de pagamento escolhida', () => {
+    const revenueEntries = [makeRevenueEntry({ amountCents: 10000, paymentMethodId: null })]
+
+    const result = calculateProfitForPeriod(
+      '2026-08-01',
+      '2026-08-31',
+      [],
+      revenueEntries,
+      costCategories,
+      [],
+      feePercentByPaymentMethodId,
+    )
+
+    expect(result.cardFeeCents).toBe(0)
+  })
+
+  it('não quebra quando feePercentByPaymentMethodId não é informado (parâmetro opcional)', () => {
+    const revenueEntries = [makeRevenueEntry({ amountCents: 10000, paymentMethodId: 'credito' })]
+
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, costCategories, [])
+
+    expect(result.cardFeeCents).toBe(0)
+  })
+
   it('calcula o preço médio de venda por lançamento e por unidade', () => {
     const revenueEntries = [
       makeRevenueEntry({ amountCents: 1000, unitsSold: 5 }),
@@ -339,6 +389,13 @@ describe('calculateAccumulatedCash', () => {
     ]
 
     expect(calculateAccumulatedCash(costEntries, revenueEntries, withdrawals)).toBe(2500)
+  })
+
+  it('desconta também as taxas de forma de pagamento do caixa, de qualquer mês', () => {
+    const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-08-15', amountCents: 10000, paymentMethodId: 'credito' })]
+
+    // 10000 - 8% de taxa = 9200 de caixa de verdade, não 10000
+    expect(calculateAccumulatedCash([], revenueEntries, [], feePercentByPaymentMethodId)).toBe(9200)
   })
 })
 

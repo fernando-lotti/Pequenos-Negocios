@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { calculateFinancialAlerts } from '../features/reports/financialAlerts'
@@ -25,6 +26,7 @@ interface DashboardPageProps {
 export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
   const { categories: costCategories } = useCostCategories(business.id)
   const { categories: revenueCategories } = useRevenueCategories(business.id)
+  const { paymentMethods } = usePaymentMethods(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const {
@@ -36,23 +38,46 @@ export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
   } = useWithdrawals(business.id)
   const [editingWithdrawal, setEditingWithdrawal] = useState<Withdrawal | null>(null)
 
+  const feePercentByPaymentMethodId = useMemo(
+    () => new Map(paymentMethods.map((method) => [method.id, method.feePercent])),
+    [paymentMethods],
+  )
+
   const startDate = getFirstDayOfCurrentMonthIso()
   const endDate = getLastDayOfCurrentMonthIso()
   const todayDate = getTodayAsIsoDate()
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories),
-    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories],
+    () =>
+      calculateProfitForPeriod(
+        startDate,
+        endDate,
+        costEntries,
+        revenueEntries,
+        costCategories,
+        revenueCategories,
+        feePercentByPaymentMethodId,
+      ),
+    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories, feePercentByPaymentMethodId],
   )
   // Breakdown só até HOJE (não até o fim do mês) — usado na projeção de fim
   // de mês, pra não contar lançamentos com data futura como já realizados
   // (ver MonthEndProjectionCard.tsx).
   const breakdownSoFar = useMemo(
-    () => calculateProfitForPeriod(startDate, todayDate, costEntries, revenueEntries, costCategories, revenueCategories),
-    [startDate, todayDate, costEntries, revenueEntries, costCategories, revenueCategories],
+    () =>
+      calculateProfitForPeriod(
+        startDate,
+        todayDate,
+        costEntries,
+        revenueEntries,
+        costCategories,
+        revenueCategories,
+        feePercentByPaymentMethodId,
+      ),
+    [startDate, todayDate, costEntries, revenueEntries, costCategories, revenueCategories, feePercentByPaymentMethodId],
   )
   const cashCents = useMemo(
-    () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals),
-    [costEntries, revenueEntries, withdrawals],
+    () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals, feePercentByPaymentMethodId),
+    [costEntries, revenueEntries, withdrawals, feePercentByPaymentMethodId],
   )
   const financialAlerts = useMemo(
     () =>

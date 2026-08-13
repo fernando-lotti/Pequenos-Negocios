@@ -3,22 +3,24 @@ import { RevenueEntryForm } from '../features/revenue/RevenueEntryForm'
 import { RevenueEntryList } from '../features/revenue/RevenueEntryList'
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
+import { usePaymentMethods } from '../features/paymentMethods/usePaymentMethods'
 import type { RevenueEntry } from '../features/revenue/types'
 import type { Business } from '../features/business/types'
 
 interface RevenuePageProps {
   business: Business
   // Ver comentário em RevenueEntryForm.tsx — leva pra aba Ajustes, onde
-  // agora fica o cadastro de categorias de receita.
+  // agora fica o cadastro de categorias de receita e de formas de pagamento.
   onManageCategories: () => void
 }
 
 export function RevenuePage({ business, onManageCategories }: RevenuePageProps) {
   const { categories, isLoading: isLoadingCategories } = useRevenueCategories(business.id)
+  const { paymentMethods, isLoading: isLoadingPaymentMethods } = usePaymentMethods(business.id)
   const { entries, isLoading: isLoadingEntries, createEntry, updateEntry, deleteEntry } = useRevenueEntries(business.id)
   const [editingEntry, setEditingEntry] = useState<RevenueEntry | null>(null)
 
-  if (isLoadingCategories || isLoadingEntries) {
+  if (isLoadingCategories || isLoadingPaymentMethods || isLoadingEntries) {
     return <p className="p-4 text-sm text-slate-500">Carregando...</p>
   }
 
@@ -28,12 +30,20 @@ export function RevenuePage({ business, onManageCategories }: RevenuePageProps) 
       <RevenueEntryForm
         key={editingEntry?.id ?? 'new'}
         categories={categories}
+        paymentMethods={paymentMethods}
         entryToEdit={editingEntry}
         onCancelEdit={() => setEditingEntry(null)}
         onSubmit={(input) => (editingEntry ? updateEntry(editingEntry.id, input) : createEntry(input))}
         onManageCategories={onManageCategories}
+        onManagePaymentMethods={onManageCategories}
       />
-      <RevenueEntryList entries={entries} categories={categories} onEdit={setEditingEntry} onDelete={deleteEntry} />
+      <RevenueEntryList
+        entries={entries}
+        categories={categories}
+        paymentMethods={paymentMethods}
+        onEdit={setEditingEntry}
+        onDelete={deleteEntry}
+      />
     </div>
   )
 }
