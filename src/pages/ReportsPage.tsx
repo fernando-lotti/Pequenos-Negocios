@@ -5,6 +5,7 @@ import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from '../features/reports/profit'
+import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
 import { PriceCalculator } from '../features/pricing/PriceCalculator'
@@ -17,28 +18,23 @@ import {
   getTodayAsIsoDate,
 } from '../lib/date'
 import type { Business } from '../features/business/types'
-import type { CostKind } from '../features/costs/types'
 
 interface ReportsPageProps {
   business: Business
 }
 
 export function ReportsPage({ business }: ReportsPageProps) {
-  const { categories } = useCostCategories(business.id)
+  const { categories: costCategories } = useCostCategories(business.id)
+  const { categories: revenueCategories } = useRevenueCategories(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const { withdrawals, isLoading: isLoadingWithdrawals } = useWithdrawals(business.id)
   const [startDate, setStartDate] = useState(getFirstDayOfCurrentMonthIso())
   const [endDate, setEndDate] = useState(getLastDayOfCurrentMonthIso())
 
-  const categoryKindById = useMemo(
-    () => new Map<string, CostKind>(categories.map((category) => [category.id, category.kind])),
-    [categories],
-  )
-
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
+    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories),
+    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories],
   )
 
   const withdrawalsCents = useMemo(
