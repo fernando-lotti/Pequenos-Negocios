@@ -135,6 +135,54 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 
 ---
 
+## [2026-08-12] — Meta mensal: lucro ou faturamento, campo simples em `businesses`
+
+**Contexto:** O time queria uma forma de acompanhar progresso rumo a um objetivo do mês, mas lucro e faturamento (receita bruta) são números bem diferentes — nem todo negócio quer acompanhar o mesmo.
+
+**Decisão:** Duas colunas opcionais em `businesses` — `monthly_goal_cents` e `monthly_goal_type` (`'profit' | 'revenue'`) — em vez de uma tabela própria de "metas". O dono escolhe o tipo ao definir a meta em Ajustes (`MonthlyGoalForm.tsx`); o Dashboard mostra uma barra de progresso comparando o lucro ou faturamento do **mês atual** (sempre recalculado ao vivo, igual todo o resto do produto) contra essa meta (`MonthlyGoalCard.tsx`, `reports/goalProgress.ts`). Mesmo padrão já usado pra `working_capital_goal_cents`: meta é sempre um valor único (não há histórico de metas passadas).
+
+**Alternativas consideradas:** Tabela própria `monthly_goals` com uma linha por mês/negócio, permitindo metas diferentes a cada mês e um histórico — rejeitada por enquanto por adicionar complexidade (mais uma tabela, mais RLS) sem uma necessidade clara ainda; forçar só meta de lucro (sem escolha de tipo) — rejeitada porque faturamento é mais fácil de entender pra quem está começando, e lucro é mais alinhado ao objetivo #1 do produto, então faz sentido deixar a pessoa escolher.
+
+**Consequências:** A meta é sempre "a atual" — trocar o valor no meio do mês substitui a meta anterior, sem guardar o que era antes. Se o produto evoluir pra precisar de metas por mês específico (ex: comparar metas de meses diferentes num relatório), isso vira uma tabela própria depois.
+
+---
+
+## [2026-08-12] — Calculadora de preço de venda usa margem em R$, não em porcentagem
+
+**Contexto:** Precisávamos de uma calculadora simples pra ajudar o dono a decidir por quanto vender algo, mas o app já tem um significado estabelecido pra "margem" (valor em R$ que sobra por unidade, ver `reports/profit.ts` e `GLOSSARY.md`) — diferente do "markup"/margem percentual comum em outras ferramentas.
+
+**Decisão:** A calculadora (`features/pricing/`) pede custo da unidade e margem desejada, os dois em R$, e soma os dois pra sugerir o preço (`calculateSuggestedPrice`). Não persiste nada no banco — é só uma ferramenta de apoio, sem lançamento nem histórico. Mostra a porcentagem que a margem representa do preço final como informação extra (não como campo de entrada), pra não misturar dois jeitos de pensar em margem na mesma tela.
+
+**Alternativas consideradas:** Pedir a margem como porcentagem do preço de venda (comum em outras ferramentas, ex: "quero 30% de margem") — rejeitada porque criaria um segundo significado de "margem" dentro do mesmo app, o que é confuso justamente pro público que o produto quer educar.
+
+**Consequências:** Quem já está acostumado a pensar em margem como porcentagem precisa converter mentalmente pra R$ antes de usar a calculadora — aceitável porque a tela já mostra a porcentagem equivalente depois do cálculo, e mantém consistência com o resto do app.
+
+---
+
+## [2026-08-12] — Ponto de equilíbrio reaproveita fixedCostCents e marginPerUnitCents, sem novo dado
+
+**Contexto:** Queríamos mostrar quantas vendas/atendimentos faltam pra cobrir os custos fixos do período (issue #21), mas o produto já calcula tudo que é preciso pra isso: `fixedCostCents` e `marginPerUnitCents` (`reports/profit.ts`).
+
+**Decisão:** `calculateBreakEven` (`reports/breakEven.ts`) é só `Math.ceil(fixedCostCents / marginPerUnitCents)`, arredondado pra cima porque não existe "meia venda". Herda a mesma limitação da margem: só aparece quando `marginPerUnitCents` não é `null` (a pessoa precisa ter preenchido "Quantidade" em pelo menos uma receita do período). Quando a margem é zero ou negativa, o card não mostra um número de vendas (matematicamente daria infinito ou negativo) — mostra uma mensagem orientando a revisar preço/custo variável em vez disso.
+
+**Alternativas consideradas:** Nenhuma alternativa de cálculo — é a fórmula padrão de ponto de equilíbrio. A única decisão real foi como lidar com margem ≤ 0, e optamos por uma mensagem explicativa em vez de esconder o card silenciosamente, pra reforçar o caráter educativo do produto.
+
+**Consequências:** Herda a mesma aproximação da margem (é uma média do período, não por produto/serviço individual — ver ADR "Margem é uma média do mês").
+
+---
+
+## [2026-08-12] — Projeção de fim de mês: média diária simples, calculada só até hoje
+
+**Contexto:** Queríamos dar uma ideia de "como o mês deve terminar" no Dashboard (issue #22), sem construir um modelo de previsão sofisticado — o público-alvo se beneficia mais de uma estimativa simples e clara do que de uma "IA prevendo o futuro".
+
+**Decisão:** `calculateMonthEndProjection` (`reports/monthEndProjection.ts`) pega receita e custo acumulados **do início do mês até hoje** (não até o fim do mês) e extrapola linearmente pelos dias que faltam: `valor até hoje ÷ dias já passados × total de dias do mês`. Importante: o Dashboard calcula esse breakdown "até hoje" separado do breakdown do mês inteiro (`DashboardPage.tsx`, `breakdownSoFar`), porque o produto permite datar lançamentos no futuro (não trava datas) — usar o breakdown do mês inteiro contaria custos/receitas ainda não realizados como se já tivessem acontecido, inflando a base da projeção.
+
+**Alternativas consideradas:** Média móvel dos últimos N dias (mais sensível a mudanças recentes de ritmo) — descartada por ser mais difícil de explicar pro time não-técnico do que uma média simples do mês inteiro; não mostrar projeção nenhuma até o mês estar mais avançado (ex: só a partir do dia 5) — descartada porque a UI já deixa claro que é uma estimativa, e um número aproximado desde o dia 1 ainda é mais útil do que nenhum número.
+
+**Consequências:** A projeção é bem instável nos primeiros dias do mês (uma venda grande no dia 1 pode projetar um mês inteiro exagerado) — aceitável porque o texto já avisa "fica mais confiável conforme o mês avança", mas vale revisitar se isso confundir os usuários na prática.
+
+---
+
 ## [2026-08-12] — Ranking de custos por categoria estende totalsByCategory, filtragem de período fica na página
 
 **Contexto:** Queríamos um ranking das categorias de custo do período, da que mais pesa pra que menos pesa (issue #23). `costs/calculations.ts` já tinha `totalsByCategory`, que soma por categoria mas não ordena, não resolve nome, e não calcula porcentagem do total.
