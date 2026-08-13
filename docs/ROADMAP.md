@@ -23,6 +23,7 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 - [x] Meta mensal de lucro ou faturamento, com barra de progresso no Dashboard
 - [x] Ponto de equilíbrio (quantas vendas/atendimentos pra cobrir os custos fixos)
 - [x] Projeção de fim de mês (estimativa de lucro no ritmo atual)
+- [x] Ranking de categorias de custo do período ("pra onde seu dinheiro está indo")
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)
 

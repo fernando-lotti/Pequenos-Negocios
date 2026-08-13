@@ -180,3 +180,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Média móvel dos últimos N dias (mais sensível a mudanças recentes de ritmo) — descartada por ser mais difícil de explicar pro time não-técnico do que uma média simples do mês inteiro; não mostrar projeção nenhuma até o mês estar mais avançado (ex: só a partir do dia 5) — descartada porque a UI já deixa claro que é uma estimativa, e um número aproximado desde o dia 1 ainda é mais útil do que nenhum número.
 
 **Consequências:** A projeção é bem instável nos primeiros dias do mês (uma venda grande no dia 1 pode projetar um mês inteiro exagerado) — aceitável porque o texto já avisa "fica mais confiável conforme o mês avança", mas vale revisitar se isso confundir os usuários na prática.
+
+---
+
+## [2026-08-12] — Ranking de custos por categoria estende totalsByCategory, filtragem de período fica na página
+
+**Contexto:** Queríamos um ranking das categorias de custo do período, da que mais pesa pra que menos pesa (issue #23). `costs/calculations.ts` já tinha `totalsByCategory`, que soma por categoria mas não ordena, não resolve nome, e não calcula porcentagem do total.
+
+**Decisão:** Nova função `rankCostsByCategory(entries, categories)` em `costs/calculations.ts`, reaproveitando `totalsByCategory` por dentro, que resolve o nome de cada categoria, calcula `percentOfTotal` e ordena do maior pro menor. Ela não sabe nada sobre "período" — recebe os lançamentos já filtrados. Quem filtra por período é `ReportsPage.tsx`, com o mesmo filtro inclusivo de datas (`costDate >= startDate && costDate <= endDate`) já usado em `calculateProfitForPeriod`, mantendo a lógica de filtro de data centralizada num padrão só, mesmo que reaproveitada em dois lugares.
+
+**Alternativas consideradas:** Fazer `rankCostsByCategory` receber `startDate`/`endDate` e filtrar internamente — rejeitado porque duplicaria a regra de filtro de data que já vive implicitamente em `profit.ts`, e misturaria duas responsabilidades (agrupar por categoria + filtrar por data) na mesma função.
+
+**Consequências:** Nenhuma — é aditivo, não muda nenhum cálculo existente. `totalsByCategory` continua exportada e usável isoladamente (hoje só usada internamente por `rankCostsByCategory`).

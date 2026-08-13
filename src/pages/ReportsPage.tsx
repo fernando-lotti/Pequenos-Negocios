@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Card } from '../components/Card'
+import { rankCostsByCategory } from '../features/costs/calculations'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
 import { ConceptTip } from '../features/education/ConceptTip'
+import { CostRankingCard } from '../features/reports/CostRankingCard'
 import { BreakEvenCard } from '../features/reports/BreakEvenCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from '../features/reports/profit'
@@ -42,6 +44,13 @@ export function ReportsPage({ business }: ReportsPageProps) {
     () => calculateWithdrawalsForPeriod(startDate, endDate, withdrawals),
     [startDate, endDate, withdrawals],
   )
+
+  // Mesma janela inclusiva de datas usada em calculateProfitForPeriod —
+  // ver reports/profit.ts.
+  const costRanking = useMemo(() => {
+    const periodCostEntries = costEntries.filter((entry) => entry.costDate >= startDate && entry.costDate <= endDate)
+    return rankCostsByCategory(periodCostEntries, costCategories)
+  }, [costEntries, costCategories, startDate, endDate])
 
   function selectCurrentMonth() {
     setStartDate(getFirstDayOfCurrentMonthIso())
@@ -119,6 +128,8 @@ export function ReportsPage({ business }: ReportsPageProps) {
       <BreakEvenCard breakdown={breakdown} />
 
       <PriceCalculator />
+
+      <CostRankingCard ranking={costRanking} />
 
       <Card>
         <p className="text-sm text-slate-600">Retiradas do período</p>

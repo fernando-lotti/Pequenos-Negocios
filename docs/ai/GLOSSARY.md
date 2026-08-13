@@ -26,6 +26,7 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Retirada de caixa | Dinheiro que o dono tira do caixa do negócio pra uso pessoal — reduz o caixa, mas não é custo do negócio, então não entra no cálculo de lucro | `withdrawal` (tabela `withdrawals`) |
 | Ponto de equilíbrio | Quantidade de vendas/atendimentos necessária pra cobrir o custo fixo do período: custo fixo ÷ margem por unidade | (calculado, ver `reports/breakEven.ts`) |
 | Projeção de fim de mês | Estimativa de receita/custo/lucro até o fim do mês, extrapolando a média diária observada até hoje | (calculado, ver `reports/monthEndProjection.ts`) |
+| Ranking de custos | Categorias de custo do período ordenadas da que mais pesa pra que menos pesa, com % do total | (calculado, ver `costs/calculations.ts`, `rankCostsByCategory`) |
 | Dica educativa | Explicação curta de um conceito financeiro, mostrada na primeira vez que ele aparece | `concept_tip` (conteúdo estático, ver `education/tips.ts`) |
 | Conceito | Identificador de um termo financeiro que tem dica educativa associada | `concept_id` (ex: `capital_de_giro`, `custo_fixo`) |
 
