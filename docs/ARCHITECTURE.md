@@ -168,3 +168,15 @@ Registro simples de decisões importantes — formato ADR (Architecture Decision
 **Alternativas consideradas:** Nenhuma alternativa de cálculo — é a fórmula padrão de ponto de equilíbrio. A única decisão real foi como lidar com margem ≤ 0, e optamos por uma mensagem explicativa em vez de esconder o card silenciosamente, pra reforçar o caráter educativo do produto.
 
 **Consequências:** Herda a mesma aproximação da margem (é uma média do período, não por produto/serviço individual — ver ADR "Margem é uma média do mês").
+
+---
+
+## [2026-08-12] — Projeção de fim de mês: média diária simples, calculada só até hoje
+
+**Contexto:** Queríamos dar uma ideia de "como o mês deve terminar" no Dashboard (issue #22), sem construir um modelo de previsão sofisticado — o público-alvo se beneficia mais de uma estimativa simples e clara do que de uma "IA prevendo o futuro".
+
+**Decisão:** `calculateMonthEndProjection` (`reports/monthEndProjection.ts`) pega receita e custo acumulados **do início do mês até hoje** (não até o fim do mês) e extrapola linearmente pelos dias que faltam: `valor até hoje ÷ dias já passados × total de dias do mês`. Importante: o Dashboard calcula esse breakdown "até hoje" separado do breakdown do mês inteiro (`DashboardPage.tsx`, `breakdownSoFar`), porque o produto permite datar lançamentos no futuro (não trava datas) — usar o breakdown do mês inteiro contaria custos/receitas ainda não realizados como se já tivessem acontecido, inflando a base da projeção.
+
+**Alternativas consideradas:** Média móvel dos últimos N dias (mais sensível a mudanças recentes de ritmo) — descartada por ser mais difícil de explicar pro time não-técnico do que uma média simples do mês inteiro; não mostrar projeção nenhuma até o mês estar mais avançado (ex: só a partir do dia 5) — descartada porque a UI já deixa claro que é uma estimativa, e um número aproximado desde o dia 1 ainda é mais útil do que nenhum número.
+
+**Consequências:** A projeção é bem instável nos primeiros dias do mês (uma venda grande no dia 1 pode projetar um mês inteiro exagerado) — aceitável porque o texto já avisa "fica mais confiável conforme o mês avança", mas vale revisitar se isso confundir os usuários na prática.
