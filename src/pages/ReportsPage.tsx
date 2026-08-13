@@ -8,6 +8,7 @@ import { calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEnt
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
+import { PriceCalculator } from '../features/pricing/PriceCalculator'
 import { formatCurrencyBRL } from '../lib/currency'
 import {
   getFirstDayOfCurrentMonthIso,
@@ -113,6 +114,8 @@ export function ReportsPage({ business }: ReportsPageProps) {
       </div>
 
       <ProfitSummaryCard breakdown={breakdown} />
+
+      <PriceCalculator />
 
       <Card>
         <p className="text-sm text-slate-600">Retiradas do período</p>
