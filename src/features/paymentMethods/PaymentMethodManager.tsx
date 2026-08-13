@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Card } from '../../components/Card'
 import { PrimaryButton } from '../../components/PrimaryButton'
 import { fieldClass, labelClass } from '../../components/Field'
+import { GlossaryTerm } from '../education/GlossaryTerm'
 import type { NewPaymentMethodInput, PaymentMethod } from './types'
 
 interface PaymentMethodManagerProps {
@@ -105,7 +106,8 @@ export function PaymentMethodManager({
     <Card>
       <p className="font-semibold text-slate-900">Formas de pagamento</p>
       <p className="mt-1 text-sm text-slate-500">
-        A taxa é descontada automaticamente do seu lucro quando você escolher essa forma de pagamento numa receita.
+        A <GlossaryTerm conceptId="taxa_de_pagamento">taxa</GlossaryTerm> é descontada automaticamente do seu lucro
+        quando você escolher essa forma de pagamento numa receita.
       </p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 

@@ -49,4 +49,23 @@ export const CONCEPT_TIPS: Record<string, ConceptTipContent> = {
     title: '💡 Por que o valor lançado é diferente do que cai na conta?',
     body: 'Quando você recebe por Pix não tem desconto, mas no cartão a maquininha ou o banco costuma cobrar uma taxa antes do dinheiro cair na sua conta. O app já desconta essa taxa automaticamente do seu lucro e do seu caixa, de acordo com a forma de pagamento que você escolher em cada receita — você pode ajustar as taxas em Ajustes → Formas de pagamento.',
   },
+  // Estes três, diferente dos de cima, não aparecem sozinhos em nenhuma
+  // tela ainda — existem só pra consulta no Glossário (ver GlossaryPage.tsx),
+  // a pedido do time pra cobrir termos que a pessoa pode ouvir falar mesmo
+  // sem o app ter usado ainda (ex: ao planejar a troca de um equipamento).
+  depreciacao: {
+    id: 'depreciacao',
+    title: '💡 O que é depreciação?',
+    body: 'É a perda de valor de um equipamento com o uso e o tempo — uma máquina de cartão, uma fritadeira, o carro do app. Mesmo sem quebrar, esse equipamento vai ficando mais velho e um dia vai precisar ser trocado. Guardar um pouco todo mês pensando nessa troca futura é uma forma de se planejar pra esse gasto, mesmo que ele ainda não tenha acontecido.',
+  },
+  faturamento: {
+    id: 'faturamento',
+    title: '💡 O que é faturamento?',
+    body: 'É tudo o que entrou de receita no período, antes de descontar qualquer custo — diferente do lucro, que é o que sobra depois de pagar tudo. Faturar bastante não garante lucro: dá pra faturar alto e ainda assim ter prejuízo, se os custos forem maiores que a receita.',
+  },
+  prejuizo: {
+    id: 'prejuizo',
+    title: '💡 O que é prejuízo?',
+    body: 'É quando os custos do período são maiores que a receita — o contrário do lucro. Não significa que o negócio parou, mas é um sinal de que vale revisar preços, custos ou volume de vendas antes que o caixa fique apertado.',
+  },
 }

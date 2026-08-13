@@ -21,9 +21,10 @@ import type { Withdrawal } from '../features/withdrawals/types'
 interface DashboardPageProps {
   business: Business
   onManageGoal: () => void
+  onOpenGlossary: () => void
 }
 
-export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
+export function DashboardPage({ business, onManageGoal, onOpenGlossary }: DashboardPageProps) {
   const { categories: costCategories } = useCostCategories(business.id)
   const { categories: revenueCategories } = useRevenueCategories(business.id)
   const { paymentMethods } = usePaymentMethods(business.id)
@@ -96,7 +97,12 @@ export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
-      <h1 className="text-lg font-bold text-slate-900">{business.name}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-bold text-slate-900">{business.name}</h1>
+        <button type="button" onClick={onOpenGlossary} className="text-xs text-emerald-700 underline">
+          📖 Glossário
+        </button>
+      </div>
       <ProfitSummaryCard breakdown={breakdown} />
       <FinancialAlertsCard alerts={financialAlerts} />
       <MonthlyGoalCard business={business} breakdown={breakdown} onManageGoal={onManageGoal} />

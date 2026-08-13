@@ -1,4 +1,5 @@
 import { Card } from '../../components/Card'
+import { GlossaryTerm } from '../education/GlossaryTerm'
 import { formatCurrencyBRL } from '../../lib/currency'
 import type { ProductMargin } from '../revenue/calculations'
 
@@ -15,7 +16,9 @@ export function ProductMarginCard({ margins }: ProductMarginCardProps) {
 
   return (
     <Card>
-      <p className="font-semibold text-slate-900">Margem por produto</p>
+      <p className="font-semibold text-slate-900">
+        <GlossaryTerm conceptId="margem">Margem</GlossaryTerm> por produto
+      </p>
       <p className="mt-1 text-sm text-slate-500">
         Receita, custo e margem de cada produto com custo por unidade cadastrado (ver Ajustes).
       </p>

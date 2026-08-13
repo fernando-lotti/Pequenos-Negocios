@@ -1,5 +1,6 @@
 import { Card } from '../../components/Card'
 import { ConceptTip } from '../education/ConceptTip'
+import { GlossaryTerm } from '../education/GlossaryTerm'
 import { calculateBreakEven } from './breakEven'
 import type { ProfitBreakdown } from './profit'
 
@@ -17,7 +18,9 @@ export function BreakEvenCard({ breakdown }: BreakEvenCardProps) {
 
   return (
     <Card>
-      <p className="font-semibold text-slate-900">Ponto de equilíbrio</p>
+      <p className="font-semibold text-slate-900">
+        <GlossaryTerm conceptId="ponto_de_equilibrio">Ponto de equilíbrio</GlossaryTerm>
+      </p>
 
       {!breakEven.possible && (
         <p className="mt-1 text-sm text-slate-600">

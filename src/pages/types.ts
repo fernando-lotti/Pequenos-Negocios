@@ -1,1 +1,1 @@
-export type Tab = 'dashboard' | 'costs' | 'revenue' | 'reports' | 'settings'
+export type Tab = 'dashboard' | 'costs' | 'revenue' | 'reports' | 'settings' | 'glossary'

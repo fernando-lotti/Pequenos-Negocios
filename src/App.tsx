@@ -8,6 +8,7 @@ import { CostsPage } from './pages/CostsPage'
 import { RevenuePage } from './pages/RevenuePage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { GlossaryPage } from './pages/GlossaryPage'
 import type { Tab } from './pages/types'
 
 function AuthenticatedApp({
@@ -18,7 +19,7 @@ function AuthenticatedApp({
   createBusiness,
   updateMonthlyGoal,
 }: AuthGateContext) {
-  const [activeTab, navigateToTab] = useTabNavigation<Tab>('dashboard')
+  const [activeTab, navigateToTab, goBack] = useTabNavigation<Tab>('dashboard')
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -46,7 +47,11 @@ function AuthenticatedApp({
       </header>
 
       {activeTab === 'dashboard' && (
-        <DashboardPage business={activeBusiness} onManageGoal={() => navigateToTab('settings')} />
+        <DashboardPage
+          business={activeBusiness}
+          onManageGoal={() => navigateToTab('settings')}
+          onOpenGlossary={() => navigateToTab('glossary')}
+        />
       )}
       {activeTab === 'costs' && (
         <CostsPage business={activeBusiness} onManageCategories={() => navigateToTab('settings')} />
@@ -56,8 +61,14 @@ function AuthenticatedApp({
       )}
       {activeTab === 'reports' && <ReportsPage business={activeBusiness} />}
       {activeTab === 'settings' && (
-        <SettingsPage business={activeBusiness} userEmail={user.email ?? ''} onSaveMonthlyGoal={updateMonthlyGoal} />
+        <SettingsPage
+          business={activeBusiness}
+          userEmail={user.email ?? ''}
+          onSaveMonthlyGoal={updateMonthlyGoal}
+          onOpenGlossary={() => navigateToTab('glossary')}
+        />
       )}
+      {activeTab === 'glossary' && <GlossaryPage onBack={goBack} />}
 
       <BottomNav activeTab={activeTab} onNavigate={navigateToTab} />
     </div>
