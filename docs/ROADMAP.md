@@ -19,6 +19,9 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 ## Fase 2 — Polimento e aprofundamento educativo
 - [ ] Mais dicas educativas cobrindo os demais conceitos do glossário (margem, insumo, etc.)
 - [x] Cálculo de margem por unidade vendida/atendimento
+- [x] Calculadora de preço de venda (custo da unidade + margem desejada)
+- [x] Meta mensal de lucro ou faturamento, com barra de progresso no Dashboard
+- [x] Ponto de equilíbrio (quantas vendas/atendimentos pra cobrir os custos fixos)
 - [x] Projeção de fim de mês (estimativa de lucro no ritmo atual)
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)

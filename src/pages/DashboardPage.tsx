@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
+import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { MonthEndProjectionCard } from '../features/reports/MonthEndProjectionCard'
+import { MonthlyGoalCard } from '../features/reports/MonthlyGoalCard'
 import { ProfitSummaryCard } from '../features/reports/ProfitSummaryCard'
 import { calculateAccumulatedCash, calculateProfitForPeriod } from '../features/reports/profit'
 import { DailyCashSummary } from '../features/revenue/DailyCashSummary'
@@ -11,15 +13,16 @@ import { WithdrawalList } from '../features/withdrawals/WithdrawalList'
 import { useWithdrawals } from '../features/withdrawals/useWithdrawals'
 import { getFirstDayOfCurrentMonthIso, getLastDayOfCurrentMonthIso, getTodayAsIsoDate } from '../lib/date'
 import type { Business } from '../features/business/types'
-import type { CostKind } from '../features/costs/types'
 import type { Withdrawal } from '../features/withdrawals/types'
 
 interface DashboardPageProps {
   business: Business
+  onManageGoal: () => void
 }
 
-export function DashboardPage({ business }: DashboardPageProps) {
-  const { categories } = useCostCategories(business.id)
+export function DashboardPage({ business, onManageGoal }: DashboardPageProps) {
+  const { categories: costCategories } = useCostCategories(business.id)
+  const { categories: revenueCategories } = useRevenueCategories(business.id)
   const { entries: costEntries, isLoading: isLoadingCosts } = useCostEntries(business.id)
   const { entries: revenueEntries, isLoading: isLoadingRevenue } = useRevenueEntries(business.id)
   const {
@@ -31,24 +34,19 @@ export function DashboardPage({ business }: DashboardPageProps) {
   } = useWithdrawals(business.id)
   const [editingWithdrawal, setEditingWithdrawal] = useState<Withdrawal | null>(null)
 
-  const categoryKindById = useMemo(
-    () => new Map<string, CostKind>(categories.map((category) => [category.id, category.kind])),
-    [categories],
-  )
-
   const startDate = getFirstDayOfCurrentMonthIso()
   const endDate = getLastDayOfCurrentMonthIso()
   const todayDate = getTodayAsIsoDate()
   const breakdown = useMemo(
-    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, endDate, costEntries, revenueEntries, categoryKindById],
+    () => calculateProfitForPeriod(startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories),
+    [startDate, endDate, costEntries, revenueEntries, costCategories, revenueCategories],
   )
   // Breakdown só até HOJE (não até o fim do mês) — usado na projeção de fim
   // de mês, pra não contar lançamentos com data futura como já realizados
   // (ver MonthEndProjectionCard.tsx).
   const breakdownSoFar = useMemo(
-    () => calculateProfitForPeriod(startDate, todayDate, costEntries, revenueEntries, categoryKindById),
-    [startDate, todayDate, costEntries, revenueEntries, categoryKindById],
+    () => calculateProfitForPeriod(startDate, todayDate, costEntries, revenueEntries, costCategories, revenueCategories),
+    [startDate, todayDate, costEntries, revenueEntries, costCategories, revenueCategories],
   )
   const cashCents = useMemo(
     () => calculateAccumulatedCash(costEntries, revenueEntries, withdrawals),
@@ -63,6 +61,7 @@ export function DashboardPage({ business }: DashboardPageProps) {
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <h1 className="text-lg font-bold text-slate-900">{business.name}</h1>
       <ProfitSummaryCard breakdown={breakdown} />
+      <MonthlyGoalCard business={business} breakdown={breakdown} onManageGoal={onManageGoal} />
       <MonthEndProjectionCard soFarBreakdown={breakdownSoFar} />
       <DailyCashSummary cashCents={cashCents} />
       <WithdrawalForm

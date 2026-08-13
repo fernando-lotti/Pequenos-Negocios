@@ -20,9 +20,11 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Registro diário de receita | Lançamento de receita do dia (valor, unidades opcional, categoria opcional) | `revenue_entry` (tabela `revenue_entries`) |
 | Caixa | Saldo calculado (receitas menos custos), nunca armazenado numa tabela própria | (calculado, ver `reports/profit.ts`) |
 | Capital de giro | Reserva de dinheiro pra cobrir custos até a próxima entrada de receita | `working_capital_goal_cents` (campo opcional em `businesses`) |
+| Meta mensal | Valor de lucro ou faturamento que o dono define pra acompanhar o progresso do mês, com barra de progresso no Dashboard | `monthly_goal_cents` + `monthly_goal_type` (campos opcionais em `businesses`, ver `reports/MonthlyGoalCard.tsx`) |
 | Margem | Diferença entre o preço de venda e o custo variável de uma unidade. Calculada como média do mês: (receita − custos variáveis) ÷ unidades vendidas | (calculado, ver `reports/profit.ts`, campo `marginPerUnitCents`) |
 | Lucro líquido | Receitas do mês menos todos os custos (fixos + variáveis) do mês | (calculado, ver `reports/profit.ts`) |
 | Retirada de caixa | Dinheiro que o dono tira do caixa do negócio pra uso pessoal — reduz o caixa, mas não é custo do negócio, então não entra no cálculo de lucro | `withdrawal` (tabela `withdrawals`) |
+| Ponto de equilíbrio | Quantidade de vendas/atendimentos necessária pra cobrir o custo fixo do período: custo fixo ÷ margem por unidade | (calculado, ver `reports/breakEven.ts`) |
 | Projeção de fim de mês | Estimativa de receita/custo/lucro até o fim do mês, extrapolando a média diária observada até hoje | (calculado, ver `reports/monthEndProjection.ts`) |
 | Dica educativa | Explicação curta de um conceito financeiro, mostrada na primeira vez que ele aparece | `concept_tip` (conteúdo estático, ver `education/tips.ts`) |
 | Conceito | Identificador de um termo financeiro que tem dica educativa associada | `concept_id` (ex: `capital_de_giro`, `custo_fixo`) |
