@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Card } from '../components/Card'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { BUSINESS_TYPE_INFO } from '../features/business/businessTypePresets'
+import { MonthlyGoalForm } from '../features/business/MonthlyGoalForm'
 import { CostCategoryManager } from '../features/costs/CostCategoryManager'
 import { useCostCategories } from '../features/costs/useCostCategories'
 import { useCostEntries } from '../features/costs/useCostEntries'
@@ -11,11 +12,12 @@ import { RevenueCategoryManager } from '../features/revenue/RevenueCategoryManag
 import { useRevenueCategories } from '../features/revenue/useRevenueCategories'
 import { useRevenueEntries } from '../features/revenue/useRevenueEntries'
 import { supabase } from '../lib/supabase'
-import type { Business } from '../features/business/types'
+import type { Business, MonthlyGoalInput } from '../features/business/types'
 
 interface SettingsPageProps {
   business: Business
   userEmail: string
+  onSaveMonthlyGoal: (businessId: string, goal: MonthlyGoalInput | null) => Promise<unknown>
 }
 
 // O cadastro de categorias (de custo e de receita) mora aqui, em vez de
@@ -23,7 +25,7 @@ interface SettingsPageProps {
 // do negócio, não do dia a dia de lançar valores — os formulários de
 // lançamento levam pra cá através da opção "+ Nova categoria" (ver
 // CostEntryForm.tsx e RevenueEntryForm.tsx).
-export function SettingsPage({ business, userEmail }: SettingsPageProps) {
+export function SettingsPage({ business, userEmail, onSaveMonthlyGoal }: SettingsPageProps) {
   const {
     categories: costCategories,
     isLoading: isLoadingCostCategories,
@@ -86,6 +88,8 @@ export function SettingsPage({ business, userEmail }: SettingsPageProps) {
           Pra adicionar outro negócio, use o botão "+ Novo negócio" no topo da tela.
         </p>
       </Card>
+
+      <MonthlyGoalForm business={business} onSave={onSaveMonthlyGoal} />
 
       <CostCategoryManager
         categories={costCategories}

@@ -32,6 +32,12 @@ create table if not exists businesses (
   -- Usada pela dica educativa sobre capital de giro; não entra no cálculo
   -- de lucro/caixa.
   working_capital_goal_cents bigint,
+  -- Meta mensal opcional pra acompanhar progresso no Dashboard (ver
+  -- reports/MonthlyGoalCard.tsx). monthly_goal_type escolhe se a meta é
+  -- sobre lucro líquido ou faturamento (receita bruta) — são coisas
+  -- diferentes, e cada dono decide qual prefere acompanhar de perto.
+  monthly_goal_cents bigint,
+  monthly_goal_type text check (monthly_goal_type in ('profit', 'revenue')),
   created_at timestamptz not null default now()
 );
 
@@ -424,6 +430,20 @@ using (business_id in (select id from businesses where owner_id = auth.uid()));
 
 create index if not exists idx_withdrawals_business_id on withdrawals (business_id);
 create index if not exists idx_withdrawals_withdrawal_date on withdrawals (business_id, withdrawal_date);
+
+-- ============================================================================
+-- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES
+-- desta mudança (issue: meta mensal de lucro ou faturamento, com progresso
+-- no Dashboard). Adiciona duas colunas opcionais em businesses. Projeto
+-- novo, rodando o arquivo inteiro pela primeira vez, pode ignorar este
+-- bloco — a tabela já nasce com essas colunas.
+--
+-- Cole só este bloco no SQL Editor do Supabase e clique em Run.
+-- ============================================================================
+alter table businesses add column if not exists monthly_goal_cents bigint;
+alter table businesses add column if not exists monthly_goal_type text;
+alter table businesses drop constraint if exists businesses_monthly_goal_type_check;
+alter table businesses add constraint businesses_monthly_goal_type_check check (monthly_goal_type in ('profit', 'revenue'));
 
 -- ============================================================================
 -- Migração — só precisa rodar isso se este projeto Supabase já existia ANTES

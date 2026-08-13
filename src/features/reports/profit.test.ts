@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { calculateAccumulatedCash, calculateProfitForPeriod, calculateWithdrawalsForPeriod, getEarliestEntryDate } from './profit'
-import type { CostEntry, CostKind } from '../costs/types'
-import type { RevenueEntry } from '../revenue/types'
+import type { CostCategory, CostEntry } from '../costs/types'
+import type { RevenueCategory, RevenueEntry } from '../revenue/types'
 import type { Withdrawal } from '../withdrawals/types'
 
 function makeCostEntry(overrides: Partial<CostEntry>): CostEntry {
@@ -45,10 +45,34 @@ function makeWithdrawal(overrides: Partial<Withdrawal>): Withdrawal {
   }
 }
 
-const categoryKindById = new Map<string, CostKind>([
-  ['category-fixed', 'fixed'],
-  ['category-variable', 'variable'],
-])
+function makeCostCategory(overrides: Partial<CostCategory>): CostCategory {
+  return {
+    id: 'category-fixed',
+    businessId: 'business-1',
+    name: 'Aluguel',
+    kind: 'fixed',
+    unitLabel: null,
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function makeRevenueCategory(overrides: Partial<RevenueCategory>): RevenueCategory {
+  return {
+    id: 'category-a',
+    businessId: 'business-1',
+    name: 'Pipoca doce',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+const costCategories = [
+  makeCostCategory({ id: 'category-fixed', name: 'Aluguel', kind: 'fixed' }),
+  makeCostCategory({ id: 'category-variable', name: 'Embalagens', kind: 'variable' }),
+]
 
 const feePercentByPaymentMethodId = new Map<string, number>([
   ['pix', 0],
@@ -63,7 +87,7 @@ describe('calculateProfitForPeriod', () => {
     ]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.revenueCents).toBe(5000)
     expect(result.fixedCostCents).toBe(1000)
@@ -76,7 +100,7 @@ describe('calculateProfitForPeriod', () => {
     const costEntries = [makeCostEntry({ costDate: '2026-07-20', amountCents: 9999 })]
     const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-07-20', amountCents: 9999 })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.revenueCents).toBe(0)
     expect(result.totalCostCents).toBe(0)
@@ -94,7 +118,7 @@ describe('calculateProfitForPeriod', () => {
       makeRevenueEntry({ revenueDate: '2026-08-25', amountCents: 4000 }),
     ]
 
-    const result = calculateProfitForPeriod('2026-07-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-07-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.revenueCents).toBe(7000)
     expect(result.totalCostCents).toBe(1500)
@@ -105,7 +129,7 @@ describe('calculateProfitForPeriod', () => {
     const costEntries = [makeCostEntry({ costDate: '2026-08-01', amountCents: 100 })]
     const revenueEntries = [makeRevenueEntry({ revenueDate: '2026-08-31', amountCents: 200 })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.totalCostCents).toBe(100)
     expect(result.revenueCents).toBe(200)
@@ -118,7 +142,7 @@ describe('calculateProfitForPeriod', () => {
     ]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.fixedCostCents).toBe(1000)
     expect(result.uncategorizedCostCents).toBe(300)
@@ -130,7 +154,7 @@ describe('calculateProfitForPeriod', () => {
     const costEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 10000 })]
     const revenueEntries = [makeRevenueEntry({ amountCents: 2000 })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.profitCents).toBe(-8000)
   })
@@ -139,13 +163,20 @@ describe('calculateProfitForPeriod', () => {
     const costEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 1000 })]
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000 })]
 
-    const before = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const before = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
     expect(before.profitCents).toBe(4000)
 
     // Simula edição de um lançamento de um período "passado" — a mesma
     // função, sem nenhum estado extra, já reflete o novo valor.
     const editedCostEntries = [makeCostEntry({ costCategoryId: 'category-fixed', amountCents: 4000 })]
-    const after = calculateProfitForPeriod('2026-08-01', '2026-08-31', editedCostEntries, revenueEntries, categoryKindById)
+    const after = calculateProfitForPeriod(
+      '2026-08-01',
+      '2026-08-31',
+      editedCostEntries,
+      revenueEntries,
+      costCategories,
+      [],
+    )
     expect(after.profitCents).toBe(1000)
   })
 
@@ -159,7 +190,7 @@ describe('calculateProfitForPeriod', () => {
       makeRevenueEntry({ amountCents: 7000, unitsSold: 20 }),
     ]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, revenueEntries, costCategories, [])
 
     expect(result.unitsSoldTotal).toBe(30)
     // (10000 receita - 2000 custo variável) / 30 unidades = 266,67 -> arredonda pra 267
@@ -172,7 +203,7 @@ describe('calculateProfitForPeriod', () => {
       makeRevenueEntry({ amountCents: 7000, unitsSold: 20 }),
     ]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, costCategories, [])
 
     expect(result.unitsSoldTotal).toBe(20)
     expect(result.marginPerUnitCents).toBe(500)
@@ -181,7 +212,7 @@ describe('calculateProfitForPeriod', () => {
   it('devolve margem null quando nenhuma receita do período tem unidades vendidas', () => {
     const revenueEntries = [makeRevenueEntry({ amountCents: 5000, unitsSold: null })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, costCategories, [])
 
     expect(result.unitsSoldTotal).toBe(0)
     expect(result.marginPerUnitCents).toBeNull()
@@ -198,7 +229,8 @@ describe('calculateProfitForPeriod', () => {
       '2026-08-31',
       [],
       revenueEntries,
-      categoryKindById,
+      costCategories,
+      [],
       feePercentByPaymentMethodId,
     )
 
@@ -215,7 +247,8 @@ describe('calculateProfitForPeriod', () => {
       '2026-08-31',
       [],
       revenueEntries,
-      categoryKindById,
+      costCategories,
+      [],
       feePercentByPaymentMethodId,
     )
 
@@ -225,9 +258,98 @@ describe('calculateProfitForPeriod', () => {
   it('não quebra quando feePercentByPaymentMethodId não é informado (parâmetro opcional)', () => {
     const revenueEntries = [makeRevenueEntry({ amountCents: 10000, paymentMethodId: 'credito' })]
 
-    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, categoryKindById)
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, costCategories, [])
 
     expect(result.cardFeeCents).toBe(0)
+  })
+
+  it('calcula o preço médio de venda por lançamento e por unidade', () => {
+    const revenueEntries = [
+      makeRevenueEntry({ amountCents: 1000, unitsSold: 5 }),
+      makeRevenueEntry({ amountCents: 2000, unitsSold: 5 }),
+    ]
+
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, costCategories, [])
+
+    // 3000 receita / 2 lançamentos = 1500
+    expect(result.avgSalePriceByCountCents).toBe(1500)
+    // 3000 receita / 10 unidades = 300
+    expect(result.avgSalePriceByUnitCents).toBe(300)
+  })
+
+  it('devolve preço médio null quando não há receita nem unidades vendidas no período', () => {
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], [], costCategories, [])
+
+    expect(result.avgSalePriceByCountCents).toBeNull()
+    expect(result.avgSalePriceByUnitCents).toBeNull()
+  })
+
+  it('quebra os custos por categoria individual, na ordem em que as categorias foram passadas, escondendo categoria sem gasto no período', () => {
+    const categories = [
+      makeCostCategory({ id: 'cat-1', name: 'Aluguel', kind: 'fixed' }),
+      makeCostCategory({ id: 'cat-2', name: 'Sem gasto no período', kind: 'variable' }),
+      makeCostCategory({ id: 'cat-3', name: 'Embalagens', kind: 'variable' }),
+    ]
+    const costEntries = [
+      makeCostEntry({ costCategoryId: 'cat-1', amountCents: 1000 }),
+      makeCostEntry({ costCategoryId: 'cat-3', amountCents: 400 }),
+      makeCostEntry({ costCategoryId: 'cat-3', amountCents: 100 }),
+      makeCostEntry({ costCategoryId: null, amountCents: 50 }),
+    ]
+
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', costEntries, [], categories, [])
+
+    expect(result.costByCategory).toEqual([
+      { categoryId: 'cat-1', name: 'Aluguel', totalCents: 1000 },
+      { categoryId: 'cat-3', name: 'Embalagens', totalCents: 500 },
+      { categoryId: null, name: 'Sem categoria', totalCents: 50 },
+    ])
+  })
+
+  it('quebra a receita por categoria, com preço médio próprio de cada uma', () => {
+    const categories = [
+      makeRevenueCategory({ id: 'cat-doce', name: 'Pipoca doce' }),
+      makeRevenueCategory({ id: 'cat-salgada', name: 'Pipoca salgada' }),
+      makeRevenueCategory({ id: 'cat-sem-venda', name: 'Sem venda no período' }),
+    ]
+    const revenueEntries = [
+      makeRevenueEntry({ revenueCategoryId: 'cat-doce', amountCents: 1000, unitsSold: 2 }),
+      makeRevenueEntry({ revenueCategoryId: 'cat-doce', amountCents: 500, unitsSold: 1 }),
+      makeRevenueEntry({ revenueCategoryId: 'cat-salgada', amountCents: 900, unitsSold: null }),
+      makeRevenueEntry({ revenueCategoryId: null, amountCents: 200, unitsSold: null }),
+    ]
+
+    const result = calculateProfitForPeriod('2026-08-01', '2026-08-31', [], revenueEntries, [], categories)
+
+    expect(result.revenueByCategory).toEqual([
+      {
+        categoryId: 'cat-doce',
+        name: 'Pipoca doce',
+        totalCents: 1500,
+        entryCount: 2,
+        unitsSold: 3,
+        avgPriceByCountCents: 750,
+        avgPriceByUnitCents: 500,
+      },
+      {
+        categoryId: 'cat-salgada',
+        name: 'Pipoca salgada',
+        totalCents: 900,
+        entryCount: 1,
+        unitsSold: 0,
+        avgPriceByCountCents: 900,
+        avgPriceByUnitCents: null,
+      },
+      {
+        categoryId: null,
+        name: 'Sem categoria',
+        totalCents: 200,
+        entryCount: 1,
+        unitsSold: 0,
+        avgPriceByCountCents: 200,
+        avgPriceByUnitCents: null,
+      },
+    ])
   })
 })
 

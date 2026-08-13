@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DEFAULT_PAYMENT_METHODS } from '../paymentMethods/defaultPaymentMethods'
 import { getCostCategoryPreset, getRevenueCategoryPreset } from './businessTypePresets'
-import type { Business, NewBusinessInput } from './types'
+import type { Business, MonthlyGoalInput, NewBusinessInput } from './types'
 
 // Guardamos qual negócio está "ativo" no localStorage — é uma preferência
 // de navegação da pessoa, não um dado do negócio em si, então não precisa
@@ -16,6 +16,8 @@ interface BusinessRow {
   business_type: string
   business_subtype: string | null
   working_capital_goal_cents: number | null
+  monthly_goal_cents: number | null
+  monthly_goal_type: string | null
   created_at: string
 }
 
@@ -27,6 +29,8 @@ function mapRowToBusiness(row: BusinessRow): Business {
     businessType: row.business_type as Business['businessType'],
     businessSubtype: row.business_subtype,
     workingCapitalGoalCents: row.working_capital_goal_cents,
+    monthlyGoalCents: row.monthly_goal_cents,
+    monthlyGoalType: row.monthly_goal_type as Business['monthlyGoalType'],
     createdAt: row.created_at,
   }
 }
@@ -38,6 +42,7 @@ export interface UseBusinessesResult {
   error: string | null
   setActiveBusinessId: (id: string) => void
   createBusiness: (input: NewBusinessInput) => Promise<Business>
+  updateMonthlyGoal: (businessId: string, goal: MonthlyGoalInput | null) => Promise<Business>
   refresh: () => Promise<void>
 }
 
@@ -147,8 +152,37 @@ export function useBusinesses(userId: string | null): UseBusinessesResult {
     return business
   }
 
+  // goal = null limpa a meta (volta pra "sem meta definida"), em vez de um
+  // fluxo separado de "remover" — mais simples pro usuário (um único botão
+  // "Salvar meta" que também aceita valor vazio).
+  async function updateMonthlyGoal(businessId: string, goal: MonthlyGoalInput | null): Promise<Business> {
+    const { data, error: updateError } = await supabase
+      .from('businesses')
+      .update({
+        monthly_goal_cents: goal?.amountCents ?? null,
+        monthly_goal_type: goal?.type ?? null,
+      })
+      .eq('id', businessId)
+      .select()
+      .single()
+
+    if (updateError) throw updateError
+    const updated = mapRowToBusiness(data as BusinessRow)
+    setBusinesses((current) => current.map((business) => (business.id === businessId ? updated : business)))
+    return updated
+  }
+
   const activeBusiness =
     businesses.find((business) => business.id === activeBusinessId) ?? businesses[0] ?? null
 
-  return { businesses, activeBusiness, isLoading, error, setActiveBusinessId, createBusiness, refresh }
+  return {
+    businesses,
+    activeBusiness,
+    isLoading,
+    error,
+    setActiveBusinessId,
+    createBusiness,
+    updateMonthlyGoal,
+    refresh,
+  }
 }

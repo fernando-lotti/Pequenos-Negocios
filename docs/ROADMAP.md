@@ -19,6 +19,12 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 ## Fase 2 — Polimento e aprofundamento educativo
 - [ ] Mais dicas educativas cobrindo os demais conceitos do glossário (margem, insumo, etc.)
 - [x] Cálculo de margem por unidade vendida/atendimento
+- [x] Calculadora de preço de venda (custo da unidade + margem desejada)
+- [x] Meta mensal de lucro ou faturamento, com barra de progresso no Dashboard
+- [x] Ponto de equilíbrio (quantas vendas/atendimentos pra cobrir os custos fixos)
+- [x] Projeção de fim de mês (estimativa de lucro no ritmo atual)
+- [x] Ranking de categorias de custo do período ("pra onde seu dinheiro está indo")
+- [x] Alertas de saúde financeira no Dashboard (custo fixo alto, caixa abaixo da meta de capital de giro)
 - [x] Forma de pagamento na receita (Pix, Débito, Crédito...), com taxa descontada automaticamente do lucro e do caixa
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)
@@ -35,3 +41,4 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 - Tabela `business_types` configurável no banco (painel pra editar presets sem precisar de deploy) — só se o número de verticais crescer muito
 - Sincronizar "dicas já vistas" no Supabase (hoje fica em `localStorage`, por dispositivo)
 - Múltiplos usuários com acesso a um mesmo negócio (ex: um funcionário lançando dados)
+- Tela pra editar a meta de capital de giro (`working_capital_goal_cents` existe no banco desde o início, mas hoje não tem nenhum formulário que grave um valor nela — sem isso, o alerta de "caixa abaixo da meta" nunca dispara na prática)
