@@ -77,12 +77,12 @@ export function GlossaryPage({ onBack }: GlossaryPageProps) {
                   type="button"
                   onClick={() => toggle(tip.id)}
                   aria-expanded={isExpanded}
-                  className="flex w-full items-center justify-between gap-3 p-4 text-left"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left"
                 >
                   <span className="font-semibold text-slate-900">{tip.title}</span>
                   <span className="shrink-0 text-lg leading-none text-slate-400">{isExpanded ? '−' : '+'}</span>
                 </button>
-                {isExpanded && <p className="px-4 pb-4 text-sm text-slate-600">{tip.body}</p>}
+                {isExpanded && <p className="px-4 pb-3 text-sm text-slate-600">{tip.body}</p>}
               </Card>
             )
           })}
