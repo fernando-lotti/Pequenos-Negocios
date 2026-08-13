@@ -22,7 +22,7 @@ function makeEntry(overrides: Partial<RevenueEntry>): RevenueEntry {
     revenueDate: '2026-08-05',
     amountCents: 1000,
     unitsSold: null,
-    paymentMethod: null,
+    paymentMethodId: null,
     notes: null,
     createdAt: '2026-08-05T00:00:00.000Z',
     ...overrides,
