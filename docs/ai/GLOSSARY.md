@@ -30,6 +30,7 @@ Termos de negócio usados neste projeto, e o nome técnico correspondente que de
 | Alerta de saúde financeira | Aviso ativo gerado a partir de uma regra simples sobre os números do mês (ex: custo fixo alto, caixa abaixo da meta) | (calculado, ver `reports/financialAlerts.ts`) |
 | Forma de pagamento | Como o cliente pagou (Pix, Débito, Crédito...), com uma taxa % que a maquininha/banco cobra — descontada automaticamente do lucro e do caixa | `payment_method` (tabela `payment_methods`, campo `fee_percent`) |
 | Taxa de pagamento | Valor descontado das receitas do período por causa da taxa da forma de pagamento escolhida em cada uma | (calculado, ver `reports/profit.ts`, campo `cardFeeCents`) |
+| Parcelador automático | Cria vários lançamentos de custo de uma vez, um por mês, a partir de um valor total e um número de parcelas (ex: compra financiada de um equipamento) | (calculado, ver `costs/installments.ts`, usado por `useCostEntries.createInstallments`) |
 | Dica educativa | Explicação curta de um conceito financeiro, mostrada na primeira vez que ele aparece | `concept_tip` (conteúdo estático, ver `education/tips.ts`) |
 | Conceito | Identificador de um termo financeiro que tem dica educativa associada | `concept_id` (ex: `capital_de_giro`, `custo_fixo`) |
 

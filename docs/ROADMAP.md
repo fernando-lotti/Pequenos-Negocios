@@ -26,6 +26,7 @@ Sugestão de fases — ajustem conforme o time for aprendendo o que faz sentido.
 - [x] Ranking de categorias de custo do período ("pra onde seu dinheiro está indo")
 - [x] Alertas de saúde financeira no Dashboard (custo fixo alto, caixa abaixo da meta de capital de giro)
 - [x] Forma de pagamento na receita (Pix, Débito, Crédito...), com taxa descontada automaticamente do lucro e do caixa
+- [x] Parcelador automático de custos (compras financiadas, ex: equipamento)
 - [ ] Gráficos/relatórios de evolução do lucro e dos custos por categoria, ao longo dos meses
 - [ ] Onboarding mais guiado (tour da primeira vez)
 
