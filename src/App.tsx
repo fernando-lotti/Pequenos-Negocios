@@ -22,15 +22,26 @@ function AuthenticatedApp({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white px-4 py-3">
-        <div className="mx-auto flex max-w-md items-center justify-between">
-          <span className="text-sm font-bold text-emerald-700">💼 Pequenos Negócios</span>
-          <BusinessSwitcher
-            businesses={businesses}
-            activeBusiness={activeBusiness}
-            onSelect={setActiveBusinessId}
-            onCreate={async (input) => void (await createBusiness(input))}
-          />
+      <header className="print:hidden">
+        <div className="bg-emerald-700 px-4 pb-7 pt-4">
+          <div className="mx-auto flex max-w-md items-center gap-3">
+            <img
+              src="/icon-192.png"
+              alt="Logo Pequenos Negócios"
+              className="h-11 w-11 shrink-0 rounded-xl shadow-sm"
+            />
+            <h1 className="text-2xl font-extrabold tracking-tight text-white">Pequenos Negócios</h1>
+          </div>
+        </div>
+        <div className="mx-auto -mt-4 max-w-md px-4">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-md">
+            <BusinessSwitcher
+              businesses={businesses}
+              activeBusiness={activeBusiness}
+              onSelect={setActiveBusinessId}
+              onCreate={async (input) => void (await createBusiness(input))}
+            />
+          </div>
         </div>
       </header>
 
